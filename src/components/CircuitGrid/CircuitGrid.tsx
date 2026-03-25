@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import BeamSplitterNode from "./BeamSplitterNode";
 import PhaseShifterNode from "./PhaseShifterNode";
-import RailLabels from "./RailLabels";
 import SwapNode from "./SwapNode";
 import { useExperimentStore } from "@/store/useExperimentStore";
 import type {
@@ -17,10 +16,13 @@ const COLUMN_WIDTH = 96;
 const DEFAULT_COLUMN_COUNT = 8;
 
 const RAIL_STROKE = "#0f172a";
-const RAIL_STROKE_WIDTH = 6;
-const RAIL_GLOW = "rgba(15,23,42,0.08)";
+const RAIL_STROKE_WIDTH = 5;
+const RAIL_GLOW = "rgba(15,23,42,0.12)";
 const GRID_LINE = "#e2e8f0";
 const GRID_BACKGROUND = "#f8fafc";
+
+const MIN_RAILS = 2;
+const MAX_RAILS = 6;
 
 function makeId(prefix: string): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -123,6 +125,7 @@ function createComponent(
 
 const CircuitGrid: React.FC = () => {
   const railCount = useExperimentStore((state) => state.railCount);
+  const inputState = useExperimentStore((state) => state.inputState);
   const components = useExperimentStore((state) => state.components);
   const selectedComponentId = useExperimentStore(
     (state) => state.selectedComponentId
@@ -134,6 +137,8 @@ const CircuitGrid: React.FC = () => {
     (state) => state.setSelectedComponentId
   );
   const setError = useExperimentStore((state) => state.setError);
+  const setRailCount = useExperimentStore((state) => state.setRailCount);
+  const setInputPhoton = useExperimentStore((state) => state.setInputPhoton);
 
   const [hoverCell, setHoverCell] = useState<{ rail: number; column: number } | null>(
     null
@@ -225,12 +230,58 @@ const CircuitGrid: React.FC = () => {
       <div
         style={{
           display: "flex",
-          alignItems: "flex-start",
+          alignItems: "flex-end",
           gap: 12,
-          minWidth: 80 + gridWidth,
+          minWidth: 140 + gridWidth,
+          marginBottom: 2,
         }}
       >
-        <div style={{ width: 80 }} />
+        <div
+          style={{
+            width: 140,
+            flexShrink: 0,
+          }}
+        >
+          <label
+            htmlFor="rail-count-inline"
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#475569",
+              marginBottom: 6,
+              textTransform: "uppercase",
+              letterSpacing: 0.4,
+            }}
+          >
+            Rails
+          </label>
+          <select
+            id="rail-count-inline"
+            value={railCount}
+            onChange={(event) => setRailCount(Number(event.target.value))}
+            style={{
+              width: "100%",
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "1px solid #cbd5e1",
+              background: "#ffffff",
+              fontSize: 14,
+              color: "#0f172a",
+              fontWeight: 600,
+            }}
+          >
+            {Array.from(
+              { length: MAX_RAILS - MIN_RAILS + 1 },
+              (_, i) => MIN_RAILS + i
+            ).map((count) => (
+              <option key={count} value={count}>
+                {count}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div style={{ display: "flex" }}>{renderColumnHeaders()}</div>
       </div>
 
@@ -239,10 +290,51 @@ const CircuitGrid: React.FC = () => {
           display: "flex",
           alignItems: "flex-start",
           gap: 12,
-          minWidth: 80 + gridWidth,
+          minWidth: 140 + gridWidth,
         }}
       >
-        <RailLabels railCount={railCount} rowHeight={ROW_HEIGHT} />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateRows: `repeat(${railCount}, ${ROW_HEIGHT}px)`,
+            width: 140,
+            flexShrink: 0,
+          }}
+        >
+          {Array.from({ length: railCount }, (_, rail) => (
+            <div
+              key={rail}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                paddingRight: 12,
+                boxSizing: "border-box",
+              }}
+            >
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={inputState[rail] ?? 0}
+                onChange={(event) =>
+                  setInputPhoton(rail, Math.max(0, Number(event.target.value)))
+                }
+                style={{
+                  width: 64,
+                  padding: "8px 10px",
+                  borderRadius: 10,
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  fontSize: 14,
+                  textAlign: "center",
+                  color: "#0f172a",
+                  fontWeight: 600,
+                }}
+              />
+            </div>
+          ))}
+        </div>
 
         <div
           style={{
@@ -255,7 +347,6 @@ const CircuitGrid: React.FC = () => {
             overflow: "hidden",
           }}
         >
-          {/* horizontal rail glows */}
           {Array.from({ length: railCount }, (_, rail) => {
             const y = rail * ROW_HEIGHT + ROW_HEIGHT / 2;
 
@@ -270,14 +361,12 @@ const CircuitGrid: React.FC = () => {
                   height: 9,
                   background: RAIL_GLOW,
                   borderRadius: 999,
-                  opacity: 1,
                   pointerEvents: "none",
                 }}
               />
             );
           })}
 
-          {/* main rails */}
           {Array.from({ length: railCount }, (_, rail) => {
             const y = rail * ROW_HEIGHT + ROW_HEIGHT / 2;
 
@@ -292,14 +381,12 @@ const CircuitGrid: React.FC = () => {
                   height: RAIL_STROKE_WIDTH,
                   background: RAIL_STROKE,
                   borderRadius: 999,
-                  opacity: 1,
                   pointerEvents: "none",
                 }}
               />
             );
           })}
 
-          {/* vertical grid lines */}
           {Array.from({ length: columnCount + 1 }, (_, column) => (
             <div
               key={`vertical-${column}`}
@@ -315,7 +402,6 @@ const CircuitGrid: React.FC = () => {
             />
           ))}
 
-          {/* selected column highlight */}
           {selectedStep > 0 && selectedStep - 1 < columnCount && (
             <div
               style={{
@@ -330,7 +416,6 @@ const CircuitGrid: React.FC = () => {
             />
           )}
 
-          {/* drop cells */}
           {Array.from({ length: railCount }, (_, rail) =>
             Array.from({ length: columnCount }, (_, column) => {
               const isHovered =
@@ -372,7 +457,6 @@ const CircuitGrid: React.FC = () => {
             })
           )}
 
-          {/* components */}
           {sortedComponents.map((component) => {
             const isSelected = component.id === selectedComponentId;
 

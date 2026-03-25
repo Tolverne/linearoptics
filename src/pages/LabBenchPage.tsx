@@ -2,9 +2,6 @@ import React from "react";
 import TopBar from "@/components/TopBar/TopBar";
 import ToolboxPanel from "@/components/Toolbox/ToolboxPanel";
 import CircuitGrid from "@/components/CircuitGrid/CircuitGrid";
-import InputStatePanel from "@/components/Controls/InputStatePanel";
-import DistinguishabilityPanel from "@/components/Controls/DistinguishabilityPanel";
-import SimulationOptionsPanel from "@/components/Controls/SimulationOptionsPanel";
 import ComponentInspectorPanel from "@/components/Controls/ComponentInspectorPanel";
 import StateInspectorPanel from "@/components/Results/StateInspectorPanel";
 import OutputDistributionChart from "@/components/Results/OutputDistributionChart";
@@ -30,16 +27,15 @@ const LabBenchPage: React.FC = () => {
       >
         <TopBar />
 
-        {/* Main work area */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "360px minmax(900px, 1fr)",
+            gridTemplateColumns: "320px minmax(900px, 1fr)",
             gap: 20,
             alignItems: "start",
           }}
         >
-          {/* Left control column */}
+          {/* Left sidebar */}
           <div
             style={{
               display: "grid",
@@ -49,13 +45,9 @@ const LabBenchPage: React.FC = () => {
           >
             <ToolboxPanel />
             <ComponentInspectorPanel />
-            <InputStatePanel />
-            <DistinguishabilityPanel />
-            <SimulationOptionsPanel />
-            
           </div>
 
-          {/* Right circuit area */}
+          {/* Right main content */}
           <div
             style={{
               display: "grid",
@@ -64,24 +56,21 @@ const LabBenchPage: React.FC = () => {
             }}
           >
             <CircuitGrid />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(380px, 1fr) minmax(380px, 1fr)",
+                gap: 20,
+                alignItems: "start",
+              }}
+            >
+              <StateInspectorPanel />
+              <OutputDistributionChart />
+            </div>
+
+            <OutputTablePanel />
           </div>
-        </div>
-
-        {/* Results area */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(380px, 1fr) minmax(420px, 1fr)",
-            gap: 20,
-            alignItems: "start",
-          }}
-        >
-          <StateInspectorPanel />
-          <OutputDistributionChart />
-        </div>
-
-        <div>
-          <OutputTablePanel />
         </div>
       </div>
     </div>
