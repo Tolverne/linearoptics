@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: linear-optics-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+  - type: static_site
+    name: linear-optics-frontend
+    rootDir: .
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: linear-optics-backend
+          property: hostport
