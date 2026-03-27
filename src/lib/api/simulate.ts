@@ -1,7 +1,7 @@
 import type { SimulationRequest, SimulationResponse } from "@/types/simulation";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  import.meta.env.VITE_API_BASE_URL || "https://3pbme9nwx2.ap-southeast-2.awsapprunner.com/";
 
 export async function simulateCircuit(
   payload: SimulationRequest
