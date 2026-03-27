@@ -10,6 +10,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://linear-optics-frontend.onrender.com",
+        "https://3pbme9nwx2.ap-southeast-2.awsapprunner.com/",
     ],
     allow_credentials=True,
     allow_methods=["*"],
