@@ -10,7 +10,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://linear-optics-frontend.onrender.com",
-        "https://main.ditna70yf6iy4.amplifyapp.com/",
+        "https://main.ditna70yf6iy4.amplifyapp.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
