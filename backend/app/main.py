@@ -11,6 +11,7 @@ app.add_middleware(
         "http://localhost:5173",
         "https://main.ditna70yf6iy4.amplifyapp.com",
         "https://qopt.ioeducation.com.au",
+        "https://www.qopt.ioeducation.com.au",
     ],
     allow_credentials=True,
     allow_methods=["*"],
