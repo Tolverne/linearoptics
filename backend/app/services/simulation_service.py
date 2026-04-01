@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import perceval as pcvl
 from perceval.algorithm import Sampler
@@ -15,9 +15,13 @@ from app.schemas import (
     SimulationRequest,
     SimulationResponse,
     SimulationValidation,
+    TheoryColumnOperator,
+    TheoryData,
+    TheorySnapshot,
 )
 from app.services.perceval_adapter import (
     build_basic_state,
+    build_column_circuit,
     build_full_circuit,
     build_prefix_circuit,
     columns_used,
@@ -34,12 +38,6 @@ def _make_processor(
     input_state: BasicState,
     overlap: float,
 ) -> pcvl.Processor:
-    """
-    Build a Perceval processor with a noise model driven by the UI slider.
-
-    overlap = 1.0 -> fully indistinguishable
-    overlap = 0.0 -> fully distinguishable
-    """
     noise_model = pcvl.NoiseModel(indistinguishability=overlap)
     processor = pcvl.Processor("SLOS", circuit, noise=noise_model)
     processor.min_detected_photons_filter(0)
@@ -66,7 +64,6 @@ def _processor_sample_count(
 ) -> Dict[BasicState, int]:
     processor = _make_processor(circuit, input_state, overlap)
     sampler = Sampler(processor)
-    # Perceval renamed count -> max_samples in newer versions
     result = sampler.sample_count(max_samples=shots)
     return result["results"]
 
@@ -134,7 +131,9 @@ def _compute_sampled_distribution_for_circuit(
     return _counts_to_sampled_entries(counts_dict, request.options.shots)
 
 
-def _compute_intermediate_exact_states(request: SimulationRequest) -> List[IntermediateState]:
+def _compute_intermediate_exact_states(
+    request: SimulationRequest,
+) -> List[IntermediateState]:
     if not request.options.includeIntermediateStates:
         return []
 
@@ -145,7 +144,7 @@ def _compute_intermediate_exact_states(request: SimulationRequest) -> List[Inter
         IntermediateState(
             step=0,
             column=-1,
-            label="input",
+            label="Input",
             basisStates=[
                 BasisStateSummary(
                     occupation=list(request.inputState),
@@ -158,7 +157,9 @@ def _compute_intermediate_exact_states(request: SimulationRequest) -> List[Inter
     ]
 
     for column in range(total_columns):
-        prefix_circuit = build_prefix_circuit(request, upto_exclusive_column=column + 1)
+        prefix_circuit = build_prefix_circuit(
+            request, upto_exclusive_column=column + 1
+        )
         distribution = _compute_exact_distribution_for_circuit(
             request=request,
             circuit=prefix_circuit,
@@ -169,7 +170,7 @@ def _compute_intermediate_exact_states(request: SimulationRequest) -> List[Inter
             IntermediateState(
                 step=column + 1,
                 column=column,
-                label=f"after column {column}",
+                label=f"C{column + 1}",
                 basisStates=_distribution_to_basis_state_summaries(distribution),
             )
         )
@@ -193,7 +194,7 @@ def _compute_intermediate_sampled_states(
         SampledIntermediateState(
             step=0,
             column=-1,
-            label="input",
+            label="Input",
             basisStates=[
                 SampledDistributionEntry(
                     occupation=list(request.inputState),
@@ -205,7 +206,9 @@ def _compute_intermediate_sampled_states(
     ]
 
     for column in range(total_columns):
-        prefix_circuit = build_prefix_circuit(request, upto_exclusive_column=column + 1)
+        prefix_circuit = build_prefix_circuit(
+            request, upto_exclusive_column=column + 1
+        )
         sampled_distribution = _compute_sampled_distribution_for_circuit(
             request=request,
             circuit=prefix_circuit,
@@ -216,7 +219,7 @@ def _compute_intermediate_sampled_states(
             SampledIntermediateState(
                 step=column + 1,
                 column=column,
-                label=f"after column {column}",
+                label=f"C{column + 1}",
                 basisStates=sampled_distribution or [],
             )
         )
@@ -224,14 +227,147 @@ def _compute_intermediate_sampled_states(
     return states
 
 
-def _compute_debug_unitary(circuit: pcvl.Circuit) -> SimulationDebug:
+def _matrix_lists_from_circuit(
+    circuit: pcvl.Circuit,
+) -> tuple[Optional[List[List[float]]], Optional[List[List[float]]]]:
     try:
-        U = circuit.compute_unitary()
-        unitary_re = [[float(z.real) for z in row] for row in U.tolist()]
-        unitary_im = [[float(z.imag) for z in row] for row in U.tolist()]
-        return SimulationDebug(unitaryRe=unitary_re, unitaryIm=unitary_im)
+        unitary = circuit.compute_unitary()
+        unitary_list = unitary.tolist()
+        matrix_re = [[float(value.real) for value in row] for row in unitary_list]
+        matrix_im = [[float(value.imag) for value in row] for row in unitary_list]
+        return matrix_re, matrix_im
     except Exception:
-        return SimulationDebug(unitaryRe=None, unitaryIm=None)
+        return None, None
+
+
+def _build_simulator(circuit: pcvl.Circuit):
+    try:
+        return pcvl.SimulatorFactory.build(circuit, backend="SLOS")
+    except AttributeError:
+        from perceval.simulators import SimulatorFactory
+
+        return SimulatorFactory.build(circuit, backend="SLOS")
+
+
+def _statevector_to_basis_state_summaries(
+    state_vector,
+    max_states: int,
+) -> List[BasisStateSummary]:
+    entries: List[BasisStateSummary] = []
+
+    for state, amplitude in state_vector:
+        amp = complex(amplitude)
+        entries.append(
+            BasisStateSummary(
+                occupation=list(state),
+                amplitudeRe=float(amp.real),
+                amplitudeIm=float(amp.imag),
+                probability=float(abs(amp) ** 2),
+            )
+        )
+
+    entries.sort(
+        key=lambda entry: (-entry.probability, tuple(entry.occupation))
+    )
+    return entries[:max_states]
+
+
+def _compute_ideal_output_state_for_circuit(
+    request: SimulationRequest,
+    circuit: pcvl.Circuit,
+    input_state: BasicState,
+) -> List[BasisStateSummary]:
+    simulator = _build_simulator(circuit)
+    output_state_vector = simulator.evolve(input_state)
+    return _statevector_to_basis_state_summaries(
+        output_state_vector,
+        request.options.maxDisplayedBasisStates,
+    )
+
+
+def _component_summary(component) -> str:
+    if component.type == "beam_splitter":
+        top = min(component.rails) + 1
+        bottom = max(component.rails) + 1
+        return (
+            f"BS(θ={component.params.theta:.3f}) on rails {top}-{bottom}"
+        )
+
+    if component.type == "phase_shifter":
+        return f"PS(φ={component.params.phi:.3f}) on rail {component.rail + 1}"
+
+    if component.type == "swap":
+        top = min(component.rails) + 1
+        bottom = max(component.rails) + 1
+        return f"SWAP on rails {top}-{bottom}"
+
+    return component.type
+
+
+def _compute_theory_data(request: SimulationRequest) -> TheoryData:
+    total_columns = columns_used(request.components)
+    input_state = build_basic_state(request.inputState)
+
+    column_operators: List[TheoryColumnOperator] = []
+    snapshots: List[TheorySnapshot] = []
+
+    for column in range(total_columns):
+        column_circuit = build_column_circuit(
+            rail_count=request.railCount,
+            components=request.components,
+            column=column,
+        )
+        column_re, column_im = _matrix_lists_from_circuit(column_circuit)
+
+        column_components = [
+            _component_summary(component)
+            for component in request.components
+            if component.column == column
+        ]
+
+        column_operators.append(
+            TheoryColumnOperator(
+                column=column,
+                label=f"C{column + 1}",
+                components=column_components,
+                matrixRe=column_re,
+                matrixIm=column_im,
+            )
+        )
+
+    for column in range(total_columns):
+        prefix_circuit = build_prefix_circuit(
+            request=request,
+            upto_exclusive_column=column + 1,
+        )
+        cumulative_re, cumulative_im = _matrix_lists_from_circuit(prefix_circuit)
+        output_state = _compute_ideal_output_state_for_circuit(
+            request=request,
+            circuit=prefix_circuit,
+            input_state=input_state,
+        )
+
+        snapshots.append(
+            TheorySnapshot(
+                step=column + 1,
+                column=column,
+                label=f"C{column + 1}",
+                columnOperators=column_operators[: column + 1],
+                cumulativeOperatorRe=cumulative_re,
+                cumulativeOperatorIm=cumulative_im,
+                outputState=output_state,
+            )
+        )
+
+    return TheoryData(
+        inputOccupation=list(request.inputState),
+        snapshots=snapshots,
+    )
+
+
+def _compute_debug_unitary(circuit: pcvl.Circuit) -> SimulationDebug:
+    matrix_re, matrix_im = _matrix_lists_from_circuit(circuit)
+    return SimulationDebug(unitaryRe=matrix_re, unitaryIm=matrix_im)
 
 
 def run_simulation(request: SimulationRequest) -> SimulationResponse:
@@ -252,6 +388,7 @@ def run_simulation(request: SimulationRequest) -> SimulationResponse:
 
     intermediate_states = _compute_intermediate_exact_states(request)
     sampled_intermediate_states = _compute_intermediate_sampled_states(request)
+    theory = _compute_theory_data(request)
 
     metadata = SimulationMetadata(
         railCount=request.railCount,
@@ -275,4 +412,5 @@ def run_simulation(request: SimulationRequest) -> SimulationResponse:
         finalDistribution=final_distribution,
         sampledDistribution=sampled_distribution,
         debug=debug,
+        theory=theory,
     )

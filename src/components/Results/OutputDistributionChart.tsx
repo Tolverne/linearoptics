@@ -14,8 +14,9 @@ function formatOccupationAsKet(occupation: number[]): string {
 type ChartDatum = {
   label: string;
   value: number;
-  secondaryValue?: number;
 };
+
+type InspectorMode = "exact" | "sampled";
 
 const BAR_MAX_HEIGHT = 220;
 
@@ -39,10 +40,88 @@ function sampledStateToChartData(
   }));
 }
 
+function ModeToggle({
+  mode,
+  setMode,
+  hasSampledData,
+}: {
+  mode: InspectorMode;
+  setMode: (mode: InspectorMode) => void;
+  hasSampledData: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        border: "1px solid #cbd5e1",
+        borderRadius: 12,
+        overflow: "hidden",
+        background: "#ffffff",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setMode("exact")}
+        style={{
+          padding: "8px 12px",
+          border: "none",
+          background: mode === "exact" ? "#dbeafe" : "#ffffff",
+          color: mode === "exact" ? "#1d4ed8" : "#334155",
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        Theory
+      </button>
+
+      <button
+        type="button"
+        onClick={() => hasSampledData && setMode("sampled")}
+        disabled={!hasSampledData}
+        style={{
+          padding: "8px 12px",
+          border: "none",
+          borderLeft: "1px solid #cbd5e1",
+          background: mode === "sampled" ? "#fef3c7" : "#ffffff",
+          color: hasSampledData
+            ? mode === "sampled"
+              ? "#b45309"
+              : "#334155"
+            : "#94a3b8",
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: hasSampledData ? "pointer" : "not-allowed",
+        }}
+      >
+        Experiment
+      </button>
+    </div>
+  );
+}
+
+function findStateForSelectedColumn<T extends { column: number }>(
+  states: T[],
+  selectedColumn: number
+): T | null {
+  if (states.length === 0) return null;
+
+  const exactMatch = states.find((state) => state.column === selectedColumn);
+  if (exactMatch) return exactMatch;
+
+  const safeIndex = Math.min(
+    Math.max(selectedColumn, 0),
+    Math.max(states.length - 1, 0)
+  );
+
+  return states[safeIndex] ?? null;
+}
+
 const OutputDistributionChart: React.FC = () => {
   const results = useExperimentStore((state) => state.results);
   const selectedStep = useExperimentStore((state) => state.selectedStep);
   const inspectorMode = useExperimentStore((state) => state.inspectorMode);
+  const setInspectorMode = useExperimentStore((state) => state.setInspectorMode);
 
   if (!results) {
     return (
@@ -77,7 +156,7 @@ const OutputDistributionChart: React.FC = () => {
             lineHeight: 1.5,
           }}
         >
-          Run a simulation to see the distribution at each stage of the circuit.
+          Run a simulation to see the distribution for each circuit column.
         </div>
       </div>
     );
@@ -91,25 +170,24 @@ const OutputDistributionChart: React.FC = () => {
   const effectiveMode =
     inspectorMode === "sampled" && hasSampledData ? "sampled" : "exact";
 
-  const stepCount =
-    effectiveMode === "sampled" ? sampledStates.length : exactStates.length;
-
-  const safeIndex = Math.min(Math.max(selectedStep, 0), Math.max(stepCount - 1, 0));
-
-  const currentExactState =
-    exactStates.length > 0 ? exactStates[safeIndex] ?? null : null;
-  const currentSampledState =
-    sampledStates.length > 0 ? sampledStates[safeIndex] ?? null : null;
+  const currentExactState = findStateForSelectedColumn(exactStates, selectedStep);
+  const currentSampledState = findStateForSelectedColumn(
+    sampledStates,
+    selectedStep
+  );
 
   const chartData =
     effectiveMode === "sampled"
       ? sampledStateToChartData(currentSampledState)
       : exactStateToChartData(currentExactState);
 
-  const currentLabel =
+  const activeColumn =
     effectiveMode === "sampled"
-      ? currentSampledState?.label
-      : currentExactState?.label;
+      ? currentSampledState?.column
+      : currentExactState?.column;
+
+  const currentColumnLabel =
+    typeof activeColumn === "number" ? `C${activeColumn + 1}` : "No column selected";
 
   if (chartData.length === 0) {
     return (
@@ -144,7 +222,7 @@ const OutputDistributionChart: React.FC = () => {
             lineHeight: 1.5,
           }}
         >
-          No distribution data is available for the selected stage.
+          No distribution data is available for the selected column.
         </div>
       </div>
     );
@@ -187,7 +265,7 @@ const OutputDistributionChart: React.FC = () => {
               color: "#475569",
             }}
           >
-            Showing the distribution for the currently selected stage.
+            Click a column in the circuit grid to inspect that stage.
           </div>
         </div>
 
@@ -199,23 +277,11 @@ const OutputDistributionChart: React.FC = () => {
             flexWrap: "wrap",
           }}
         >
-          <div
-            style={{
-              padding: "8px 12px",
-              borderRadius: 10,
-              background:
-                effectiveMode === "sampled" ? "#fef3c7" : "#eff6ff",
-              border:
-                effectiveMode === "sampled"
-                  ? "1px solid #fde68a"
-                  : "1px solid #bfdbfe",
-              fontSize: 13,
-              fontWeight: 700,
-              color: effectiveMode === "sampled" ? "#b45309" : "#1d4ed8",
-            }}
-          >
-            {effectiveMode === "sampled" ? "Experiment" : "Theory"}
-          </div>
+          <ModeToggle
+            mode={effectiveMode}
+            setMode={setInspectorMode}
+            hasSampledData={hasSampledData}
+          />
 
           <div
             style={{
@@ -228,7 +294,7 @@ const OutputDistributionChart: React.FC = () => {
               color: "#334155",
             }}
           >
-            {currentLabel ?? "No step selected"}
+            {currentColumnLabel}
           </div>
         </div>
       </div>

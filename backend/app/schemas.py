@@ -109,6 +109,29 @@ class SimulationDebug(BaseModel):
     unitaryIm: Optional[List[List[float]]] = None
 
 
+class TheoryColumnOperator(BaseModel):
+    column: int
+    label: str
+    components: List[str]
+    matrixRe: Optional[List[List[float]]] = None
+    matrixIm: Optional[List[List[float]]] = None
+
+
+class TheorySnapshot(BaseModel):
+    step: int
+    column: int
+    label: str
+    columnOperators: List[TheoryColumnOperator]
+    cumulativeOperatorRe: Optional[List[List[float]]] = None
+    cumulativeOperatorIm: Optional[List[List[float]]] = None
+    outputState: List[BasisStateSummary]
+
+
+class TheoryData(BaseModel):
+    inputOccupation: List[int]
+    snapshots: List[TheorySnapshot]
+
+
 class SimulationResponse(BaseModel):
     metadata: SimulationMetadata
     validation: SimulationValidation
@@ -117,3 +140,4 @@ class SimulationResponse(BaseModel):
     finalDistribution: List[FinalDistributionEntry]
     sampledDistribution: Optional[List[SampledDistributionEntry]] = None
     debug: Optional[SimulationDebug] = None
+    theory: Optional[TheoryData] = None

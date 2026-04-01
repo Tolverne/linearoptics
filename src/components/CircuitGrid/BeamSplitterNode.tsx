@@ -6,7 +6,7 @@ type BeamSplitterNodeProps = {
   rowHeight?: number;
   columnWidth?: number;
   isSelected?: boolean;
-  onSelect?: (id: string) => void;
+  onSelect?: () => void;
 };
 
 const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
@@ -38,7 +38,7 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
   return (
     <button
       type="button"
-      onClick={() => onSelect?.(component.id)}
+      onClick={onSelect}
       title={`Beam Splitter (θ = ${component.params.theta.toFixed(3)})`}
       style={{
         position: "absolute",
@@ -72,7 +72,6 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
           />
         )}
 
-        {/* erase inactive straight rail paths through the component */}
         <line
           x1="18"
           y1={railYTop}
@@ -92,7 +91,6 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
           strokeLinecap="round"
         />
 
-        {/* fibre glows */}
         <path
           d="M 5 25 L 40 25"
           fill="none"
@@ -122,7 +120,6 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
           strokeLinecap="round"
         />
 
-        {/* main fibres */}
         <path
           d="M 5 25 L 40 25"
           fill="none"
@@ -152,7 +149,6 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
           strokeLinecap="round"
         />
 
-        {/* horizontal mirror at crossing */}
         <rect
           x="38"
           y="46"
@@ -164,7 +160,6 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
           strokeWidth="2"
         />
 
-        {/* angled connection hints into mirror */}
         <path
           d="M 40 25 L 48 46"
           fill="none"
@@ -194,7 +189,6 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
           strokeLinecap="round"
         />
 
-        {/* parameter label */}
         <text
           x="66"
           y="53"
