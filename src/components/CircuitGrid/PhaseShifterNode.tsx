@@ -6,7 +6,7 @@ type PhaseShifterNodeProps = {
   rowHeight?: number;
   columnWidth?: number;
   isSelected?: boolean;
-  onSelect?: (id: string) => void;
+  onSelect?: () => void;
 };
 
 const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
@@ -19,7 +19,7 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
   return (
     <button
       type="button"
-      onClick={() => onSelect?.(component.id)}
+      onClick={onSelect}
       title={`Phase Shifter (φ = ${component.params.phi.toFixed(3)})`}
       style={{
         position: "absolute",

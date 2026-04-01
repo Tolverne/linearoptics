@@ -6,7 +6,7 @@ type SwapNodeProps = {
   rowHeight?: number;
   columnWidth?: number;
   isSelected?: boolean;
-  onSelect?: (id: string) => void;
+  onSelect?: () => void;
 };
 
 const SwapNode: React.FC<SwapNodeProps> = ({
@@ -29,14 +29,14 @@ const SwapNode: React.FC<SwapNodeProps> = ({
     ? "rgba(217,119,6,0.18)"
     : "rgba(15,23,42,0.08)";
 
-  const eraseColor = "#f8fafc"; // matches CircuitGrid background
+  const eraseColor = "#f8fafc";
   const railYTop = 25;
   const railYBottom = 75;
 
   return (
     <button
       type="button"
-      onClick={() => onSelect?.(component.id)}
+      onClick={onSelect}
       title={`Swap (${component.rails[0] + 1} ↔ ${component.rails[1] + 1})`}
       style={{
         position: "absolute",
@@ -70,7 +70,6 @@ const SwapNode: React.FC<SwapNodeProps> = ({
           />
         )}
 
-        {/* erase inactive straight rail paths */}
         <line
           x1="18"
           y1={railYTop}
@@ -90,7 +89,6 @@ const SwapNode: React.FC<SwapNodeProps> = ({
           strokeLinecap="round"
         />
 
-        {/* lower fibre glow */}
         <path
           d="M 5 75 C 28 75, 34 75, 46 56"
           fill="none"
@@ -106,7 +104,6 @@ const SwapNode: React.FC<SwapNodeProps> = ({
           strokeLinecap="round"
         />
 
-        {/* upper fibre glow */}
         <path
           d="M 5 25 C 28 25, 34 25, 50 50 C 66 75, 72 75, 95 75"
           fill="none"
@@ -115,7 +112,6 @@ const SwapNode: React.FC<SwapNodeProps> = ({
           strokeLinecap="round"
         />
 
-        {/* lower fibre main, broken at crossing so it looks underneath */}
         <path
           d="M 5 75 C 28 75, 34 75, 46 56"
           fill="none"
@@ -131,10 +127,8 @@ const SwapNode: React.FC<SwapNodeProps> = ({
           strokeLinecap="round"
         />
 
-        {/* erase a tiny crossing gap for stronger under/over effect */}
         <circle cx="50" cy="50" r="6" fill={eraseColor} />
 
-        {/* upper fibre main, continuous over the top */}
         <path
           d="M 5 25 C 28 25, 34 25, 50 50 C 66 75, 72 75, 95 75"
           fill="none"

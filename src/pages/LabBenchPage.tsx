@@ -3,8 +3,8 @@ import TopBar from "@/components/TopBar/TopBar";
 import ToolboxPanel from "@/components/Toolbox/ToolboxPanel";
 import CircuitGrid from "@/components/CircuitGrid/CircuitGrid";
 import ComponentInspectorPanel from "@/components/Controls/ComponentInspectorPanel";
-import StateInspectorPanel from "@/components/Results/StateInspectorPanel";
 import OutputDistributionChart from "@/components/Results/OutputDistributionChart";
+import TheoryPanel from "@/components/Results/TheoryPanel";
 import OutputTablePanel from "@/components/Results/OutputTablePanel";
 
 const LabBenchPage: React.FC = () => {
@@ -35,7 +35,6 @@ const LabBenchPage: React.FC = () => {
             alignItems: "start",
           }}
         >
-          {/* Left sidebar */}
           <div
             style={{
               display: "grid",
@@ -47,7 +46,6 @@ const LabBenchPage: React.FC = () => {
             <ComponentInspectorPanel />
           </div>
 
-          {/* Right main content */}
           <div
             style={{
               display: "grid",
@@ -56,19 +54,8 @@ const LabBenchPage: React.FC = () => {
             }}
           >
             <CircuitGrid />
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "minmax(380px, 1fr) minmax(380px, 1fr)",
-                gap: 20,
-                alignItems: "start",
-              }}
-            >
-              <StateInspectorPanel />
-              <OutputDistributionChart />
-            </div>
-
+            <OutputDistributionChart />
+            <TheoryPanel />
             <OutputTablePanel />
           </div>
         </div>

@@ -96,6 +96,36 @@ export type SimulationDebug = {
   unitaryIm?: number[][];
 };
 
+export type SampledIntermediateState = {
+  step: number;
+  column: number;
+  label: string;
+  basisStates: SampledDistributionEntry[];
+};
+
+export type TheoryColumnOperator = {
+  column: number;
+  label: string;
+  components: string[];
+  matrixRe?: number[][];
+  matrixIm?: number[][];
+};
+
+export type TheorySnapshot = {
+  step: number;
+  column: number;
+  label: string;
+  columnOperators: TheoryColumnOperator[];
+  cumulativeOperatorRe?: number[][];
+  cumulativeOperatorIm?: number[][];
+  outputState: BasisStateSummary[];
+};
+
+export type TheoryData = {
+  inputOccupation: Occupation;
+  snapshots: TheorySnapshot[];
+};
+
 export type SimulationResponse = {
   metadata: SimulationMetadata;
   validation: SimulationValidation;
@@ -104,6 +134,7 @@ export type SimulationResponse = {
   finalDistribution: FinalDistributionEntry[];
   sampledDistribution?: SampledDistributionEntry[];
   debug?: SimulationDebug;
+  theory?: TheoryData;
 };
 
 export type ToolboxItemType = "beam_splitter" | "phase_shifter" | "swap";
@@ -115,11 +146,4 @@ export type SelectedComponentRef = {
 export type GridCell = {
   rail: number;
   column: number;
-};
-
-export type SampledIntermediateState = {
-  step: number;
-  column: number;
-  label: string;
-  basisStates: SampledDistributionEntry[];
 };

@@ -136,6 +136,7 @@ const CircuitGrid: React.FC = () => {
   const setSelectedComponentId = useExperimentStore(
     (state) => state.setSelectedComponentId
   );
+  const setSelectedStep = useExperimentStore((state) => state.setSelectedStep);
   const setError = useExperimentStore((state) => state.setError);
   const setRailCount = useExperimentStore((state) => state.setRailCount);
   const setInputPhoton = useExperimentStore((state) => state.setInputPhoton);
@@ -195,25 +196,45 @@ const CircuitGrid: React.FC = () => {
 
     addComponent(component);
     setSelectedComponentId(component.id);
+    setSelectedStep(component.column);
     setError(null);
   };
 
+  const handleColumnSelect = (column: number) => {
+    setSelectedStep(column);
+    setSelectedComponentId(null);
+  };
+
+  const handleComponentSelect = (component: CircuitComponent) => {
+    setSelectedComponentId(component.id);
+    setSelectedStep(component.column);
+  };
+
   const renderColumnHeaders = () => {
-    return Array.from({ length: columnCount }, (_, column) => (
-      <div
-        key={column}
-        style={{
-          width: COLUMN_WIDTH,
-          textAlign: "center",
-          fontSize: 12,
-          fontWeight: 600,
-          color: selectedStep === column + 1 ? "#1d4ed8" : "#64748b",
-          paddingBottom: 8,
-        }}
-      >
-        C{column + 1}
-      </div>
-    ));
+    return Array.from({ length: columnCount }, (_, column) => {
+      const isSelected = selectedStep === column;
+
+      return (
+        <button
+          key={column}
+          type="button"
+          onClick={() => handleColumnSelect(column)}
+          style={{
+            width: COLUMN_WIDTH,
+            textAlign: "center",
+            fontSize: 12,
+            fontWeight: 700,
+            color: isSelected ? "#1d4ed8" : "#64748b",
+            paddingBottom: 8,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          C{column + 1}
+        </button>
+      );
+    });
   };
 
   return (
@@ -402,12 +423,12 @@ const CircuitGrid: React.FC = () => {
             />
           ))}
 
-          {selectedStep > 0 && selectedStep - 1 < columnCount && (
+          {selectedStep >= 0 && selectedStep < columnCount && (
             <div
               style={{
                 position: "absolute",
                 top: 0,
-                left: (selectedStep - 1) * COLUMN_WIDTH,
+                left: selectedStep * COLUMN_WIDTH,
                 width: COLUMN_WIDTH,
                 height: "100%",
                 background: "rgba(59, 130, 246, 0.08)",
@@ -440,7 +461,7 @@ const CircuitGrid: React.FC = () => {
                     });
                   }}
                   onDrop={(event) => handleDrop(event, rail, column)}
-                  onClick={() => setSelectedComponentId(null)}
+                  onClick={() => handleColumnSelect(column)}
                   style={{
                     position: "absolute",
                     left: column * COLUMN_WIDTH,
@@ -451,6 +472,7 @@ const CircuitGrid: React.FC = () => {
                     background: isHovered
                       ? "rgba(16, 185, 129, 0.08)"
                       : "transparent",
+                    cursor: "pointer",
                   }}
                 />
               );
@@ -468,7 +490,7 @@ const CircuitGrid: React.FC = () => {
                   rowHeight={ROW_HEIGHT}
                   columnWidth={COLUMN_WIDTH}
                   isSelected={isSelected}
-                  onSelect={setSelectedComponentId}
+                  onSelect={() => handleComponentSelect(component)}
                 />
               );
             }
@@ -481,7 +503,7 @@ const CircuitGrid: React.FC = () => {
                   rowHeight={ROW_HEIGHT}
                   columnWidth={COLUMN_WIDTH}
                   isSelected={isSelected}
-                  onSelect={setSelectedComponentId}
+                  onSelect={() => handleComponentSelect(component)}
                 />
               );
             }
@@ -493,7 +515,7 @@ const CircuitGrid: React.FC = () => {
                 rowHeight={ROW_HEIGHT}
                 columnWidth={COLUMN_WIDTH}
                 isSelected={isSelected}
-                onSelect={setSelectedComponentId}
+                onSelect={() => handleComponentSelect(component)}
               />
             );
           })}

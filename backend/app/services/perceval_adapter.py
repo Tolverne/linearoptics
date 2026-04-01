@@ -42,6 +42,28 @@ def build_basic_state(input_state: List[int]) -> BasicState:
     return BasicState(input_state)
 
 
+def _add_component_to_circuit(
+    circuit: pcvl.Circuit, component: CircuitComponent
+) -> None:
+    if component.type == "beam_splitter":
+        r0, r1 = component.rails
+        top = min(r0, r1)
+        circuit.add((top, top + 1), comp.BS(theta=component.params.theta))
+        return
+
+    if component.type == "phase_shifter":
+        circuit.add(component.rail, comp.PS(component.params.phi))
+        return
+
+    if component.type == "swap":
+        r0, r1 = component.rails
+        top = min(r0, r1)
+        circuit.add((top, top + 1), comp.PERM([1, 0]))
+        return
+
+    raise ValueError(f"Unsupported component type: {component.type}")
+
+
 def build_circuit_from_components(
     rail_count: int,
     components: List[CircuitComponent],
@@ -58,21 +80,20 @@ def build_circuit_from_components(
         column_components = components_in_column(sorted_components, column)
 
         for component in column_components:
-            if component.type == "beam_splitter":
-                r0, r1 = component.rails
-                top = min(r0, r1)
-                circuit.add((top, top + 1), comp.BS(theta=component.params.theta))
+            _add_component_to_circuit(circuit, component)
 
-            elif component.type == "phase_shifter":
-                circuit.add(component.rail, comp.PS(component.params.phi))
+    return circuit
 
-            elif component.type == "swap":
-                r0, r1 = component.rails
-                top = min(r0, r1)
-                circuit.add((top, top + 1), comp.PERM([1, 0]))
 
-            else:
-                raise ValueError(f"Unsupported component type: {component.type}")
+def build_column_circuit(
+    rail_count: int,
+    components: List[CircuitComponent],
+    column: int,
+) -> pcvl.Circuit:
+    circuit = pcvl.Circuit(rail_count)
+
+    for component in sort_components_by_column(components_in_column(components, column)):
+        _add_component_to_circuit(circuit, component)
 
     return circuit
 
