@@ -3,7 +3,6 @@ import katex from "katex";
 import { useExperimentStore } from "@/store/useExperimentStore";
 import type {
   BasisStateSummary,
-  TheoryColumnOperator,
   TheorySnapshot,
 } from "@/types/simulation";
 
@@ -15,41 +14,36 @@ const panelStyle: React.CSSProperties = {
   boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
 };
 
-const sectionTitleStyle: React.CSSProperties = {
+const cardStyle: React.CSSProperties = {
+  border: "1px solid #e2e8f0",
+  borderRadius: 12,
+  background: "#f8fafc",
+  padding: 12,
+  minHeight: 220,
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 800,
+  color: "#0f172a",
+  marginBottom: 8,
+};
+
+const subheadingStyle: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 800,
   color: "#0f172a",
   marginBottom: 10,
 };
 
-const cardStyle: React.CSSProperties = {
-  border: "1px solid #e2e8f0",
-  borderRadius: 12,
-  background: "#f8fafc",
-  padding: 12,
-};
-
-const tableHeaderStyle: React.CSSProperties = {
-  textAlign: "left",
-  padding: "10px 12px",
-  fontSize: 12,
-  fontWeight: 800,
-  color: "#475569",
-  textTransform: "uppercase",
-  letterSpacing: 0.4,
-  borderBottom: "1px solid #e2e8f0",
-};
-
-const tableCellStyle: React.CSSProperties = {
-  padding: "10px 12px",
-  borderBottom: "1px solid #e2e8f0",
+const headerTagStyle: React.CSSProperties = {
+  padding: "8px 12px",
+  borderRadius: 10,
+  background: "#eff6ff",
+  border: "1px solid #bfdbfe",
   fontSize: 13,
-  color: "#334155",
-};
-
-const monoCellStyle: React.CSSProperties = {
-  ...tableCellStyle,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  fontWeight: 700,
+  color: "#1d4ed8",
 };
 
 function KatexBlock({ math }: { math: string }) {
@@ -95,25 +89,6 @@ function formatComplexLatex(re = 0, im = 0): string {
   return `${formatReal(cleanRe)} ${sign} ${imagPart}`;
 }
 
-function formatComplexPlain(re = 0, im = 0): string {
-  const cleanRe = Math.abs(re) < 1e-10 ? 0 : re;
-  const cleanIm = Math.abs(im) < 1e-10 ? 0 : im;
-
-  if (cleanRe === 0 && cleanIm === 0) return "0";
-  if (cleanIm === 0) return formatReal(cleanRe);
-
-  const imagCoeff = Math.abs(cleanIm);
-  const imagPart =
-    Math.abs(imagCoeff - 1) < 1e-10 ? "i" : `${formatReal(imagCoeff)}i`;
-
-  if (cleanRe === 0) {
-    return cleanIm < 0 ? `-${imagPart}` : imagPart;
-  }
-
-  const sign = cleanIm >= 0 ? "+" : "-";
-  return `${formatReal(cleanRe)} ${sign} ${imagPart}`;
-}
-
 function ketLatex(occupation: number[]): string {
   return `\\left|${occupation.join(",")}\\right\\rangle`;
 }
@@ -135,28 +110,49 @@ function matrixToLatex(
   return `\\begin{bmatrix} ${rows.join(" \\\\ ")} \\end{bmatrix}`;
 }
 
-function stateVectorToLatex(states: BasisStateSummary[], maxTerms = 8): string {
-  const terms = states
+function stateSuperpositionLatex(
+  states: BasisStateSummary[],
+  label: string,
+  maxTerms = 8
+): string {
+  const filtered = states
     .filter(
       (state) =>
         Math.abs(state.amplitudeRe ?? 0) > 1e-10 ||
         Math.abs(state.amplitudeIm ?? 0) > 1e-10
     )
-    .slice(0, maxTerms)
-    .map((state) => {
-      const amplitude = formatComplexLatex(
-        state.amplitudeRe ?? 0,
-        state.amplitudeIm ?? 0
-      );
-      return `\\left(${amplitude}\\right)\\,${ketLatex(state.occupation)}`;
-    });
+    .slice(0, maxTerms);
 
-  if (terms.length === 0) {
-    return "0";
+  if (filtered.length === 0) {
+    return `${label} = 0`;
   }
 
+  const lines = filtered.map((state, index) => {
+    const amplitude = formatComplexLatex(
+      state.amplitudeRe ?? 0,
+      state.amplitudeIm ?? 0
+    );
+    const ket = ketLatex(state.occupation);
+    const prefix = index === 0 ? "" : "+\\;";
+    return `${prefix}\\left(${amplitude}\\right)${ket}`;
+  });
+
   const hasMore = states.length > maxTerms;
-  return hasMore ? `${terms.join(" + ")} + \\cdots` : terms.join(" + ");
+  if (hasMore) {
+    lines.push("+\\;\\cdots");
+  }
+
+  return `${label} =
+  \\begin{aligned}
+  ${lines.join(" \\\\ ")}
+  \\end{aligned}`;
+}
+
+function pureInputStateLatex(
+  occupation: number[],
+  label: string
+): string {
+  return `${label} = ${ketLatex(occupation)}`;
 }
 
 function multiplicationLatex(snapshot: TheorySnapshot): string {
@@ -168,11 +164,11 @@ function multiplicationLatex(snapshot: TheorySnapshot): string {
   return `U_{\\leq \\mathrm{${snapshot.label}}} = ${factors}`;
 }
 
-function renderComponentSummary(operator: TheoryColumnOperator): string {
-  if (!operator.components || operator.components.length === 0) {
-    return "Identity on this column";
+function activeColumnMatrixLabel(columnLabel: string, matrixLatex: string | null) {
+  if (!matrixLatex) {
+    return `U_{\\mathrm{${columnLabel}}} = \\text{matrix unavailable}`;
   }
-  return operator.components.join(" · ");
+  return `U_{\\mathrm{${columnLabel}}} = ${matrixLatex}`;
 }
 
 const TheoryPanel: React.FC = () => {
@@ -239,7 +235,7 @@ const TheoryPanel: React.FC = () => {
           }}
         >
           Add at least one circuit column and run the experiment to see the
-          theoretical matrices and output state vectors.
+          theoretical matrices and state vectors.
         </div>
       </div>
     );
@@ -249,18 +245,50 @@ const TheoryPanel: React.FC = () => {
     theory.snapshots.find((snapshot) => snapshot.column === selectedStep) ??
     theory.snapshots[0];
 
+  const selectedIndex = theory.snapshots.findIndex(
+    (snapshot) => snapshot.column === selectedSnapshot.column
+  );
+
+  const previousSnapshot =
+    selectedIndex > 0 ? theory.snapshots[selectedIndex - 1] : null;
+
+  const activeColumnOperator =
+    selectedSnapshot.columnOperators[selectedSnapshot.columnOperators.length - 1] ??
+    null;
+
   const cumulativeMatrixLatex = matrixToLatex(
     selectedSnapshot.cumulativeOperatorRe,
     selectedSnapshot.cumulativeOperatorIm
   );
 
-  const inputStateLatex = `\\left|\\psi_{\\mathrm{in}}\\right\\rangle = ${ketLatex(
-    theory.inputOccupation
-  )}`;
+  const activeColumnMatrixLatex = activeColumnOperator
+    ? matrixToLatex(activeColumnOperator.matrixRe, activeColumnOperator.matrixIm)
+    : null;
 
-  const outputStateLatex = `\\left|\\psi_{\\mathrm{out}}^{(${selectedSnapshot.label})}\\right\\rangle = ${stateVectorToLatex(
-    selectedSnapshot.outputState
-  )}`;
+  const cumulativeInputLatex = pureInputStateLatex(
+    theory.inputOccupation,
+    "\\left|\\psi_{\\mathrm{in}}\\right\\rangle"
+  );
+
+  const cumulativeOutputLatex = stateSuperpositionLatex(
+    selectedSnapshot.outputState,
+    `\\left|\\psi_{\\mathrm{out}}^{(${selectedSnapshot.label})}\\right\\rangle`
+  );
+
+  const singleColumnInputLatex = previousSnapshot
+    ? stateSuperpositionLatex(
+        previousSnapshot.outputState,
+        `\\left|\\psi_{\\mathrm{before}\\,${selectedSnapshot.label}}\\right\\rangle`
+      )
+    : pureInputStateLatex(
+        theory.inputOccupation,
+        `\\left|\\psi_{\\mathrm{before}\\,${selectedSnapshot.label}}\\right\\rangle`
+      );
+
+  const singleColumnOutputLatex = stateSuperpositionLatex(
+    selectedSnapshot.outputState,
+    `\\left|\\psi_{\\mathrm{after}\\,${selectedSnapshot.label}}\\right\\rangle`
+  );
 
   return (
     <div style={panelStyle}>
@@ -292,133 +320,45 @@ const TheoryPanel: React.FC = () => {
               lineHeight: 1.5,
             }}
           >
-            Ideal unitary mathematics up to the selected column. Click a column in
-            the circuit grid to inspect the operator chain and the exact output
-            state vector at that stage.
+            The top row shows the cumulative action up to the selected column.
+            The bottom row shows the action of the selected column alone.
           </div>
         </div>
 
-        <div
-          style={{
-            padding: "8px 12px",
-            borderRadius: 10,
-            background: "#eff6ff",
-            border: "1px solid #bfdbfe",
-            fontSize: 13,
-            fontWeight: 700,
-            color: "#1d4ed8",
-          }}
-        >
-          Selected stage: {selectedSnapshot.label}
-        </div>
+        <div style={headerTagStyle}>Active column: {selectedSnapshot.label}</div>
+      </div>
+
+      <div
+        style={{
+          ...subheadingStyle,
+          marginTop: 4,
+        }}
+      >
+        Cumulative action up to {selectedSnapshot.label}
       </div>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(320px, 1fr) minmax(320px, 1fr)",
+          gridTemplateColumns: "repeat(3, minmax(220px, 1fr))",
           gap: 16,
-          marginBottom: 18,
+          marginBottom: 20,
         }}
       >
         <div style={cardStyle}>
-          <div style={sectionTitleStyle}>Input state</div>
-          <KatexBlock math={inputStateLatex} />
+          <div style={labelStyle}>Input state</div>
+          <KatexBlock math={cumulativeInputLatex} />
         </div>
 
         <div style={cardStyle}>
-          <div style={sectionTitleStyle}>Matrix multiplication</div>
-          <KatexBlock math={multiplicationLatex(selectedSnapshot)} />
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 18 }}>
-        <div style={sectionTitleStyle}>Column operators</div>
-
-        <div
-          style={{
-            display: "grid",
-            gap: 12,
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          }}
-        >
-          {selectedSnapshot.columnOperators.map((operator) => {
-            const operatorMatrixLatex = matrixToLatex(
-              operator.matrixRe,
-              operator.matrixIm
-            );
-
-            return (
-              <div
-                key={operator.column}
-                style={{
-                  ...cardStyle,
-                  background:
-                    operator.column === selectedSnapshot.column
-                      ? "#eff6ff"
-                      : "#f8fafc",
-                  border:
-                    operator.column === selectedSnapshot.column
-                      ? "1px solid #bfdbfe"
-                      : "1px solid #e2e8f0",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 800,
-                    color: "#0f172a",
-                    marginBottom: 6,
-                  }}
-                >
-                  {operator.label}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "#475569",
-                    lineHeight: 1.5,
-                    marginBottom: 10,
-                  }}
-                >
-                  {renderComponentSummary(operator)}
-                </div>
-
-                {operatorMatrixLatex ? (
-                  <KatexBlock
-                    math={`U_{\\mathrm{${operator.label}}} = ${operatorMatrixLatex}`}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: "#64748b",
-                    }}
-                  >
-                    Matrix unavailable for this operator.
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(320px, 1fr) minmax(320px, 1fr)",
-          gap: 16,
-          marginBottom: 18,
-        }}
-      >
-        <div style={cardStyle}>
-          <div style={sectionTitleStyle}>Cumulative operator</div>
+          <div style={labelStyle}>Cumulative matrix</div>
           {cumulativeMatrixLatex ? (
-            <KatexBlock
-              math={`U_{\\leq \\mathrm{${selectedSnapshot.label}}} = ${cumulativeMatrixLatex}`}
-            />
+            <>
+              <KatexBlock math={multiplicationLatex(selectedSnapshot)} />
+              <KatexBlock
+                math={`U_{\\leq \\mathrm{${selectedSnapshot.label}}} = ${cumulativeMatrixLatex}`}
+              />
+            </>
           ) : (
             <div
               style={{
@@ -432,68 +372,66 @@ const TheoryPanel: React.FC = () => {
         </div>
 
         <div style={cardStyle}>
-          <div style={sectionTitleStyle}>Output state vector</div>
-          <KatexBlock math={outputStateLatex} />
+          <div style={labelStyle}>Output state</div>
+          <KatexBlock math={cumulativeOutputLatex} />
         </div>
       </div>
 
-      <div>
-        <div style={sectionTitleStyle}>Basis amplitudes and probabilities</div>
+      <div style={subheadingStyle}>
+        Action of {selectedSnapshot.label} only
+      </div>
 
-        <div
-          style={{
-            overflowX: "auto",
-            border: "1px solid #e2e8f0",
-            borderRadius: 12,
-          }}
-        >
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              minWidth: 640,
-            }}
-          >
-            <thead>
-              <tr style={{ background: "#f8fafc" }}>
-                <th style={tableHeaderStyle}>Basis state</th>
-                <th style={tableHeaderStyle}>Amplitude</th>
-                <th style={tableHeaderStyle}>Probability</th>
-              </tr>
-            </thead>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(220px, 1fr))",
+          gap: 16,
+        }}
+      >
+        <div style={cardStyle}>
+          <div style={labelStyle}>Input state to {selectedSnapshot.label}</div>
+          <KatexBlock math={singleColumnInputLatex} />
+        </div>
 
-            <tbody>
-              {selectedSnapshot.outputState.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={3}
-                    style={{
-                      padding: 16,
-                      fontSize: 13,
-                      color: "#64748b",
-                    }}
-                  >
-                    No output-state data available for this stage.
-                  </td>
-                </tr>
-              ) : (
-                selectedSnapshot.outputState.map((state, index) => (
-                  <tr key={`${index}-${state.occupation.join(",")}`}>
-                    <td style={monoCellStyle}>
-                      |{state.occupation.join(",")}⟩
-                    </td>
-                    <td style={monoCellStyle}>
-                      {formatComplexPlain(
-                        state.amplitudeRe ?? 0,
-                        state.amplitudeIm ?? 0
-                      )}
-                    </td>
-                    <td style={tableCellStyle}>{state.probability.toFixed(4)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div style={cardStyle}>
+          <div style={labelStyle}>Matrix for {selectedSnapshot.label}</div>
+          {activeColumnOperator ? (
+            <>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#475569",
+                  lineHeight: 1.5,
+                  marginBottom: 10,
+                }}
+              >
+                {activeColumnOperator.components.length > 0
+                  ? activeColumnOperator.components.join(" · ")
+                  : "Identity on this column"}
+              </div>
+
+              <KatexBlock
+                math={activeColumnMatrixLabel(
+                  activeColumnOperator.label,
+                  activeColumnMatrixLatex
+                )}
+              />
+            </>
+          ) : (
+            <div
+              style={{
+                fontSize: 13,
+                color: "#64748b",
+              }}
+            >
+              No operator data available for this column.
+            </div>
+          )}
+        </div>
+
+        <div style={cardStyle}>
+          <div style={labelStyle}>Output state from {selectedSnapshot.label}</div>
+          <KatexBlock math={singleColumnOutputLatex} />
         </div>
       </div>
     </div>
