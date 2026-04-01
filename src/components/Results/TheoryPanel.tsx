@@ -1,5 +1,5 @@
 import React from "react";
-import { BlockMath } from "react-katex";
+import katex from "katex";
 import { useExperimentStore } from "@/store/useExperimentStore";
 import type {
   BasisStateSummary,
@@ -52,21 +52,66 @@ const monoCellStyle: React.CSSProperties = {
   fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
 };
 
+function KatexBlock({ math }: { math: string }) {
+  let html: string;
+
+  try {
+    html = katex.renderToString(math, {
+      displayMode: true,
+      throwOnError: false,
+      strict: "ignore",
+      output: "htmlAndMathml",
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "KaTeX rendering error";
+    html = `<pre style="white-space:pre-wrap;color:#b91c1c;margin:0;">${message}\n\n${math}</pre>`;
+  }
+
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
 function formatReal(value: number): string {
   const clean = Math.abs(value) < 1e-10 ? 0 : value;
   return Number(clean.toFixed(3)).toString();
 }
 
-function formatComplex(re = 0, im = 0): string {
+function formatComplexLatex(re = 0, im = 0): string {
   const cleanRe = Math.abs(re) < 1e-10 ? 0 : re;
   const cleanIm = Math.abs(im) < 1e-10 ? 0 : im;
 
   if (cleanRe === 0 && cleanIm === 0) return "0";
   if (cleanIm === 0) return formatReal(cleanRe);
-  if (cleanRe === 0) return `${formatReal(cleanIm)}i`;
+
+  const imagCoeff = Math.abs(cleanIm);
+  const imagPart =
+    Math.abs(imagCoeff - 1) < 1e-10 ? "i" : `${formatReal(imagCoeff)}i`;
+
+  if (cleanRe === 0) {
+    return cleanIm < 0 ? `-${imagPart}` : imagPart;
+  }
 
   const sign = cleanIm >= 0 ? "+" : "-";
-  return `${formatReal(cleanRe)} ${sign} ${formatReal(Math.abs(cleanIm))}i`;
+  return `${formatReal(cleanRe)} ${sign} ${imagPart}`;
+}
+
+function formatComplexPlain(re = 0, im = 0): string {
+  const cleanRe = Math.abs(re) < 1e-10 ? 0 : re;
+  const cleanIm = Math.abs(im) < 1e-10 ? 0 : im;
+
+  if (cleanRe === 0 && cleanIm === 0) return "0";
+  if (cleanIm === 0) return formatReal(cleanRe);
+
+  const imagCoeff = Math.abs(cleanIm);
+  const imagPart =
+    Math.abs(imagCoeff - 1) < 1e-10 ? "i" : `${formatReal(imagCoeff)}i`;
+
+  if (cleanRe === 0) {
+    return cleanIm < 0 ? `-${imagPart}` : imagPart;
+  }
+
+  const sign = cleanIm >= 0 ? "+" : "-";
+  return `${formatReal(cleanRe)} ${sign} ${imagPart}`;
 }
 
 function ketLatex(occupation: number[]): string {
@@ -82,12 +127,12 @@ function matrixToLatex(
 
   const rows = matrixRe.map((row, rowIndex) => {
     const cells = row.map((value, colIndex) =>
-      formatComplex(value, matrixIm[rowIndex]?.[colIndex] ?? 0)
+      formatComplexLatex(value, matrixIm[rowIndex]?.[colIndex] ?? 0)
     );
     return cells.join(" & ");
   });
 
-  return `\\begin{bmatrix}${rows.join(" \\\\ ")}\\end{bmatrix}`;
+  return `\\begin{bmatrix} ${rows.join(" \\\\ ")} \\end{bmatrix}`;
 }
 
 function stateVectorToLatex(states: BasisStateSummary[], maxTerms = 8): string {
@@ -99,7 +144,7 @@ function stateVectorToLatex(states: BasisStateSummary[], maxTerms = 8): string {
     )
     .slice(0, maxTerms)
     .map((state) => {
-      const amplitude = formatComplex(
+      const amplitude = formatComplexLatex(
         state.amplitudeRe ?? 0,
         state.amplitudeIm ?? 0
       );
@@ -278,12 +323,12 @@ const TheoryPanel: React.FC = () => {
       >
         <div style={cardStyle}>
           <div style={sectionTitleStyle}>Input state</div>
-          <BlockMath math={inputStateLatex} />
+          <KatexBlock math={inputStateLatex} />
         </div>
 
         <div style={cardStyle}>
           <div style={sectionTitleStyle}>Matrix multiplication</div>
-          <BlockMath math={multiplicationLatex(selectedSnapshot)} />
+          <KatexBlock math={multiplicationLatex(selectedSnapshot)} />
         </div>
       </div>
 
@@ -341,7 +386,7 @@ const TheoryPanel: React.FC = () => {
                 </div>
 
                 {operatorMatrixLatex ? (
-                  <BlockMath
+                  <KatexBlock
                     math={`U_{\\mathrm{${operator.label}}} = ${operatorMatrixLatex}`}
                   />
                 ) : (
@@ -371,7 +416,7 @@ const TheoryPanel: React.FC = () => {
         <div style={cardStyle}>
           <div style={sectionTitleStyle}>Cumulative operator</div>
           {cumulativeMatrixLatex ? (
-            <BlockMath
+            <KatexBlock
               math={`U_{\\leq \\mathrm{${selectedSnapshot.label}}} = ${cumulativeMatrixLatex}`}
             />
           ) : (
@@ -388,7 +433,7 @@ const TheoryPanel: React.FC = () => {
 
         <div style={cardStyle}>
           <div style={sectionTitleStyle}>Output state vector</div>
-          <BlockMath math={outputStateLatex} />
+          <KatexBlock math={outputStateLatex} />
         </div>
       </div>
 
@@ -438,7 +483,10 @@ const TheoryPanel: React.FC = () => {
                       |{state.occupation.join(",")}⟩
                     </td>
                     <td style={monoCellStyle}>
-                      {formatComplex(state.amplitudeRe ?? 0, state.amplitudeIm ?? 0)}
+                      {formatComplexPlain(
+                        state.amplitudeRe ?? 0,
+                        state.amplitudeIm ?? 0
+                      )}
                     </td>
                     <td style={tableCellStyle}>{state.probability.toFixed(4)}</td>
                   </tr>
