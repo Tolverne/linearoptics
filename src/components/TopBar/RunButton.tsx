@@ -13,6 +13,7 @@ const RunButton: React.FC = () => {
   const includeIntermediateStates = useExperimentStore(
     (state) => state.includeIntermediateStates
   );
+  const overlapSweep = useExperimentStore((state) => state.overlapSweep);
   const isRunning = useExperimentStore((state) => state.isRunning);
 
   const setResults = useExperimentStore((state) => state.setResults);
@@ -33,6 +34,7 @@ const RunButton: React.FC = () => {
         shots,
         includeSamples,
         maxDisplayedBasisStates: 32,
+        overlapSweep,
       },
     };
 

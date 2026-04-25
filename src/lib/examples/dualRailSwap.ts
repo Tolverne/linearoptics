@@ -29,5 +29,12 @@ export const dualRailSwapExample: SimulationRequest = {
     shots: 1000,
     includeSamples: true,
     maxDisplayedBasisStates: 32,
+    overlapSweep: {
+      enabled: true,
+      minOverlap: 0,
+      maxOverlap: 1,
+      points: 21,
+      returnToStart: true,
+    },
   },
 };

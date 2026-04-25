@@ -39,11 +39,20 @@ export type DistinguishabilityConfig = {
   overlap: number;
 };
 
+export type OverlapSweepOptions = {
+  enabled: boolean;
+  minOverlap: number;
+  maxOverlap: number;
+  points: number;
+  returnToStart: boolean;
+};
+
 export type SimulationOptions = {
   includeIntermediateStates: boolean;
   shots: number;
   includeSamples: boolean;
   maxDisplayedBasisStates: number;
+  overlapSweep: OverlapSweepOptions;
 };
 
 export type SimulationRequest = {
@@ -126,6 +135,27 @@ export type TheoryData = {
   snapshots: TheorySnapshot[];
 };
 
+export type OverlapSweepCurve = {
+  occupation: Occupation;
+  probabilities: number[];
+};
+
+export type OverlapSweepStep = {
+  step: number;
+  column: number;
+  label: string;
+  overlapValues: number[];
+  curves: OverlapSweepCurve[];
+};
+
+export type OverlapSweepData = {
+  minOverlap: number;
+  maxOverlap: number;
+  points: number;
+  returnToStart: boolean;
+  steps: OverlapSweepStep[];
+};
+
 export type SimulationResponse = {
   metadata: SimulationMetadata;
   validation: SimulationValidation;
@@ -135,6 +165,7 @@ export type SimulationResponse = {
   sampledDistribution?: SampledDistributionEntry[];
   debug?: SimulationDebug;
   theory?: TheoryData;
+  overlapSweep?: OverlapSweepData;
 };
 
 export type ToolboxItemType = "beam_splitter" | "phase_shifter" | "swap";

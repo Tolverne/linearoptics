@@ -5,12 +5,39 @@ import ClearButton from "./ClearButton";
 import ResetButton from "./ResetButton";
 import { useExperimentStore } from "@/store/useExperimentStore";
 
+const numberInputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "1px solid #cbd5e1",
+  background: "#ffffff",
+  fontSize: 14,
+  color: "#0f172a",
+  fontWeight: 600,
+  boxSizing: "border-box",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#475569",
+  marginBottom: 6,
+  textTransform: "uppercase",
+  letterSpacing: 0.4,
+};
+
 const TopBar: React.FC = () => {
   const error = useExperimentStore((state) => state.error);
+
   const overlap = useExperimentStore((state) => state.overlap);
   const setOverlap = useExperimentStore((state) => state.setOverlap);
+
   const shots = useExperimentStore((state) => state.shots);
   const setShots = useExperimentStore((state) => state.setShots);
+
+  const overlapSweep = useExperimentStore((state) => state.overlapSweep);
+  const setOverlapSweep = useExperimentStore((state) => state.setOverlapSweep);
 
   return (
     <div
@@ -48,10 +75,12 @@ const TopBar: React.FC = () => {
               fontSize: 13,
               color: "#475569",
               lineHeight: 1.4,
+              maxWidth: 620,
             }}
           >
-            Build photonic circuits, vary photon overlap, and inspect output
-            distributions.
+            Build photonic circuits, vary photon overlap, inspect output
+            distributions, and compare experimental samples with theoretical
+            predictions.
           </div>
         </div>
 
@@ -59,7 +88,9 @@ const TopBar: React.FC = () => {
           style={{
             display: "grid",
             gap: 10,
-            minWidth: 420,
+            minWidth: 560,
+            maxWidth: 760,
+            flex: "1 1 560px",
           }}
         >
           <div
@@ -86,19 +117,8 @@ const TopBar: React.FC = () => {
             }}
           >
             <div>
-              <label
-                htmlFor="topbar-overlap"
-                style={{
-                  display: "block",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#475569",
-                  marginBottom: 6,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.4,
-                }}
-              >
-                Photon overlap
+              <label htmlFor="topbar-overlap" style={labelStyle}>
+                Current photon overlap
               </label>
 
               <input
@@ -131,18 +151,7 @@ const TopBar: React.FC = () => {
             </div>
 
             <div>
-              <label
-                htmlFor="topbar-shots"
-                style={{
-                  display: "block",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#475569",
-                  marginBottom: 6,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.4,
-                }}
-              >
+              <label htmlFor="topbar-shots" style={labelStyle}>
                 Samples
               </label>
 
@@ -155,17 +164,169 @@ const TopBar: React.FC = () => {
                 onChange={(event) =>
                   setShots(Math.max(1, Number(event.target.value)))
                 }
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  fontSize: 14,
-                  color: "#0f172a",
-                  fontWeight: 600,
-                }}
+                style={numberInputStyle}
               />
+            </div>
+          </div>
+
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 14,
+              background: "#f8fafc",
+              padding: 12,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+                flexWrap: "wrap",
+                marginBottom: 10,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 800,
+                    color: "#0f172a",
+                    marginBottom: 2,
+                  }}
+                >
+                  Photon overlap sweep
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#64748b",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Used to generate probability curves such as the HOM dip.
+                </div>
+              </div>
+
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#334155",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={overlapSweep.enabled}
+                  onChange={(event) =>
+                    setOverlapSweep({ enabled: event.target.checked })
+                  }
+                />
+                Enable sweep
+              </label>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, minmax(110px, 1fr))",
+                gap: 12,
+                alignItems: "end",
+                opacity: overlapSweep.enabled ? 1 : 0.5,
+              }}
+            >
+              <div>
+                <label htmlFor="sweep-min-overlap" style={labelStyle}>
+                  Min overlap
+                </label>
+                <input
+                  id="sweep-min-overlap"
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={overlapSweep.minOverlap}
+                  disabled={!overlapSweep.enabled}
+                  onChange={(event) =>
+                    setOverlapSweep({
+                      minOverlap: Number(event.target.value),
+                    })
+                  }
+                  style={numberInputStyle}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="sweep-max-overlap" style={labelStyle}>
+                  Max overlap
+                </label>
+                <input
+                  id="sweep-max-overlap"
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={overlapSweep.maxOverlap}
+                  disabled={!overlapSweep.enabled}
+                  onChange={(event) =>
+                    setOverlapSweep({
+                      maxOverlap: Number(event.target.value),
+                    })
+                  }
+                  style={numberInputStyle}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="sweep-points" style={labelStyle}>
+                  Overlap values
+                </label>
+                <input
+                  id="sweep-points"
+                  type="number"
+                  min={2}
+                  max={101}
+                  step={1}
+                  value={overlapSweep.points}
+                  disabled={!overlapSweep.enabled}
+                  onChange={(event) =>
+                    setOverlapSweep({
+                      points: Number(event.target.value),
+                    })
+                  }
+                  style={numberInputStyle}
+                />
+              </div>
+
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 0",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#334155",
+                  cursor: overlapSweep.enabled ? "pointer" : "not-allowed",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={overlapSweep.returnToStart}
+                  disabled={!overlapSweep.enabled}
+                  onChange={(event) =>
+                    setOverlapSweep({
+                      returnToStart: event.target.checked,
+                    })
+                  }
+                />
+                Return to start
+              </label>
             </div>
           </div>
         </div>

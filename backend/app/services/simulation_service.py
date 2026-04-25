@@ -9,6 +9,9 @@ from perceval.utils import BasicState
 from app.schemas import (
     BasisStateSummary,
     IntermediateState,
+    OverlapSweepCurve,
+    OverlapSweepData,
+    OverlapSweepStep,
     SampledIntermediateState,
     SimulationDebug,
     SimulationMetadata,
@@ -110,6 +113,19 @@ def _compute_exact_distribution_for_circuit(
         circuit=circuit,
         input_state=input_state,
         overlap=request.distinguishability.overlap,
+    )
+    return distribution_to_entries(probs_dict)
+
+
+def _compute_exact_distribution_for_overlap(
+    circuit: pcvl.Circuit,
+    input_state: BasicState,
+    overlap: float,
+):
+    probs_dict = _processor_probs(
+        circuit=circuit,
+        input_state=input_state,
+        overlap=overlap,
     )
     return distribution_to_entries(probs_dict)
 
@@ -365,6 +381,135 @@ def _compute_theory_data(request: SimulationRequest) -> TheoryData:
     )
 
 
+def _generate_overlap_values(
+    min_overlap: float,
+    max_overlap: float,
+    points: int,
+    return_to_start: bool,
+) -> List[float]:
+    min_clamped = min(1.0, max(0.0, float(min_overlap)))
+    max_clamped = min(1.0, max(0.0, float(max_overlap)))
+
+    start = min(min_clamped, max_clamped)
+    end = max(min_clamped, max_clamped)
+
+    point_count = min(101, max(2, int(points)))
+
+    if point_count == 1:
+        values = [start]
+    else:
+        step = (end - start) / (point_count - 1)
+        values = [start + i * step for i in range(point_count)]
+
+    if return_to_start and len(values) > 1:
+        values = values + values[-2::-1]
+
+    return [round(value, 6) for value in values]
+
+
+def _occupation_key(occupation: List[int]) -> tuple[int, ...]:
+    return tuple(int(value) for value in occupation)
+
+
+def _compute_overlap_sweep_data(
+    request: SimulationRequest,
+) -> Optional[OverlapSweepData]:
+    sweep_options = request.options.overlapSweep
+
+    if not sweep_options.enabled:
+        return None
+
+    total_columns = columns_used(request.components)
+    if total_columns <= 0:
+        return OverlapSweepData(
+            minOverlap=sweep_options.minOverlap,
+            maxOverlap=sweep_options.maxOverlap,
+            points=sweep_options.points,
+            returnToStart=sweep_options.returnToStart,
+            steps=[],
+        )
+
+    input_state = build_basic_state(request.inputState)
+    overlap_values = _generate_overlap_values(
+        min_overlap=sweep_options.minOverlap,
+        max_overlap=sweep_options.maxOverlap,
+        points=sweep_options.points,
+        return_to_start=sweep_options.returnToStart,
+    )
+
+    sweep_steps: List[OverlapSweepStep] = []
+
+    for column in range(total_columns):
+        prefix_circuit = build_prefix_circuit(
+            request=request,
+            upto_exclusive_column=column + 1,
+        )
+
+        probabilities_by_occupation: Dict[tuple[int, ...], List[float]] = {}
+
+        for overlap in overlap_values:
+            distribution = _compute_exact_distribution_for_overlap(
+                circuit=prefix_circuit,
+                input_state=input_state,
+                overlap=overlap,
+            )
+
+            current_probabilities: Dict[tuple[int, ...], float] = {
+                _occupation_key(entry.occupation): float(entry.probability)
+                for entry in distribution
+            }
+
+            all_known_keys = set(probabilities_by_occupation.keys()).union(
+                current_probabilities.keys()
+            )
+
+            for key in all_known_keys:
+                if key not in probabilities_by_occupation:
+                    probabilities_by_occupation[key] = [0.0] * (
+                        len(overlap_values)
+                    )
+
+                probabilities_by_occupation[key][
+                    len(probabilities_by_occupation[key])
+                    - (len(overlap_values) - overlap_values.index(overlap))
+                ] = current_probabilities.get(key, 0.0)
+
+        curves: List[OverlapSweepCurve] = []
+
+        for occupation_key, probabilities in probabilities_by_occupation.items():
+            curves.append(
+                OverlapSweepCurve(
+                    occupation=list(occupation_key),
+                    probabilities=probabilities,
+                )
+            )
+
+        curves.sort(
+            key=lambda curve: (
+                -max(curve.probabilities) if curve.probabilities else 0.0,
+                tuple(curve.occupation),
+            )
+        )
+
+        sweep_steps.append(
+            OverlapSweepStep(
+                step=column + 1,
+                column=column,
+                label=f"C{column + 1}",
+                overlapValues=overlap_values,
+                curves=curves,
+            )
+        )
+
+    return OverlapSweepData(
+        minOverlap=sweep_options.minOverlap,
+        maxOverlap=sweep_options.maxOverlap,
+        points=sweep_options.points,
+        returnToStart=sweep_options.returnToStart,
+        steps=sweep_steps,
+    )
+
+
 def _compute_debug_unitary(circuit: pcvl.Circuit) -> SimulationDebug:
     matrix_re, matrix_im = _matrix_lists_from_circuit(circuit)
     return SimulationDebug(unitaryRe=matrix_re, unitaryIm=matrix_im)
@@ -389,6 +534,7 @@ def run_simulation(request: SimulationRequest) -> SimulationResponse:
     intermediate_states = _compute_intermediate_exact_states(request)
     sampled_intermediate_states = _compute_intermediate_sampled_states(request)
     theory = _compute_theory_data(request)
+    overlap_sweep = _compute_overlap_sweep_data(request)
 
     metadata = SimulationMetadata(
         railCount=request.railCount,
@@ -413,4 +559,5 @@ def run_simulation(request: SimulationRequest) -> SimulationResponse:
         sampledDistribution=sampled_distribution,
         debug=debug,
         theory=theory,
+        overlapSweep=overlap_sweep,
     )

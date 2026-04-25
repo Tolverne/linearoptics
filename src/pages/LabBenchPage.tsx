@@ -4,6 +4,7 @@ import ToolboxPanel from "@/components/Toolbox/ToolboxPanel";
 import CircuitGrid from "@/components/CircuitGrid/CircuitGrid";
 import ComponentInspectorPanel from "@/components/Controls/ComponentInspectorPanel";
 import OutputDistributionChart from "@/components/Results/OutputDistributionChart";
+import PhotonOverlapSweepPanel from "@/components/Results/PhotonOverlapSweepPanel";
 import TheoryPanel from "@/components/Results/TheoryPanel";
 import OutputTablePanel from "@/components/Results/OutputTablePanel";
 
@@ -55,6 +56,7 @@ const LabBenchPage: React.FC = () => {
           >
             <CircuitGrid />
             <OutputDistributionChart />
+            <PhotonOverlapSweepPanel />
             <TheoryPanel />
             <OutputTablePanel />
           </div>

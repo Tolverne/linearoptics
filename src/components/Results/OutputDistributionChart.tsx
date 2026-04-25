@@ -3,6 +3,7 @@ import { useExperimentStore } from "@/store/useExperimentStore";
 import type {
   BasisStateSummary,
   IntermediateState,
+  Occupation,
   SampledDistributionEntry,
   SampledIntermediateState,
 } from "@/types/simulation";
@@ -11,8 +12,13 @@ function formatOccupationAsKet(occupation: number[]): string {
   return `|${occupation.join(",")}⟩`;
 }
 
+function occupationsEqual(a: Occupation, b: Occupation): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
 type ChartDatum = {
   label: string;
+  occupation: Occupation;
   value: number;
 };
 
@@ -25,6 +31,7 @@ function exactStateToChartData(state: IntermediateState | null): ChartDatum[] {
 
   return state.basisStates.map((entry: BasisStateSummary) => ({
     label: formatOccupationAsKet(entry.occupation),
+    occupation: entry.occupation,
     value: entry.probability,
   }));
 }
@@ -36,6 +43,7 @@ function sampledStateToChartData(
 
   return state.basisStates.map((entry: SampledDistributionEntry) => ({
     label: formatOccupationAsKet(entry.occupation),
+    occupation: entry.occupation,
     value: entry.frequency,
   }));
 }
@@ -123,6 +131,13 @@ const OutputDistributionChart: React.FC = () => {
   const inspectorMode = useExperimentStore((state) => state.inspectorMode);
   const setInspectorMode = useExperimentStore((state) => state.setInspectorMode);
 
+  const selectedSweepOccupations = useExperimentStore(
+    (state) => state.selectedSweepOccupations
+  );
+  const toggleSweepOccupation = useExperimentStore(
+    (state) => state.toggleSweepOccupation
+  );
+
   if (!results) {
     return (
       <div
@@ -187,7 +202,11 @@ const OutputDistributionChart: React.FC = () => {
       : currentExactState?.column;
 
   const currentColumnLabel =
-    typeof activeColumn === "number" ? `C${activeColumn + 1}` : "No column selected";
+    typeof activeColumn === "number"
+      ? activeColumn >= 0
+        ? `C${activeColumn + 1}`
+        : "Input"
+      : "No column selected";
 
   if (chartData.length === 0) {
     return (
@@ -265,7 +284,8 @@ const OutputDistributionChart: React.FC = () => {
               color: "#475569",
             }}
           >
-            Click a column in the circuit grid to inspect that stage.
+            Click bars to add or remove output states from the photon-overlap
+            sweep graph.
           </div>
         </div>
 
@@ -310,8 +330,8 @@ const OutputDistributionChart: React.FC = () => {
             display: "flex",
             alignItems: "flex-end",
             gap: 18,
-            minHeight: BAR_MAX_HEIGHT + 80,
-            minWidth: Math.max(520, chartData.length * 90),
+            minHeight: BAR_MAX_HEIGHT + 96,
+            minWidth: Math.max(520, chartData.length * 96),
             padding: "16px 12px 8px 12px",
             border: "1px solid #e2e8f0",
             borderRadius: 12,
@@ -320,16 +340,33 @@ const OutputDistributionChart: React.FC = () => {
         >
           {chartData.map((entry) => {
             const barHeight = Math.max(2, entry.value * BAR_MAX_HEIGHT);
+            const isSelectedForSweep = selectedSweepOccupations.some((current) =>
+              occupationsEqual(current, entry.occupation)
+            );
 
             return (
-              <div
+              <button
+                type="button"
                 key={entry.label}
+                onClick={() => toggleSweepOccupation(entry.occupation)}
+                title={`${entry.label}: ${entry.value.toFixed(
+                  4
+                )}. Click to toggle in overlap sweep graph.`}
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   gap: 8,
                   minWidth: 72,
+                  border: isSelectedForSweep
+                    ? "2px solid #0f766e"
+                    : "2px solid transparent",
+                  borderRadius: 12,
+                  background: isSelectedForSweep
+                    ? "rgba(20, 184, 166, 0.10)"
+                    : "transparent",
+                  padding: "6px 4px",
+                  cursor: "pointer",
                 }}
               >
                 <div
@@ -351,13 +388,15 @@ const OutputDistributionChart: React.FC = () => {
                   }}
                 >
                   <div
-                    title={`${entry.label}: ${entry.value.toFixed(4)}`}
                     style={{
                       width: 28,
                       height: barHeight,
                       borderRadius: "8px 8px 0 0",
-                      background:
-                        effectiveMode === "sampled" ? "#f59e0b" : "#2563eb",
+                      background: isSelectedForSweep
+                        ? "#0f766e"
+                        : effectiveMode === "sampled"
+                          ? "#f59e0b"
+                          : "#2563eb",
                     }}
                   />
                 </div>
@@ -374,11 +413,25 @@ const OutputDistributionChart: React.FC = () => {
                 >
                   {entry.label}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
+
+      {selectedSweepOccupations.length > 0 && (
+        <div
+          style={{
+            marginTop: 10,
+            fontSize: 12,
+            color: "#475569",
+          }}
+        >
+          {selectedSweepOccupations.length} output state
+          {selectedSweepOccupations.length === 1 ? "" : "s"} selected for the
+          overlap sweep graph.
+        </div>
+      )}
     </div>
   );
 };

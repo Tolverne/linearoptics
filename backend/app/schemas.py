@@ -45,11 +45,20 @@ class DistinguishabilityConfig(BaseModel):
     overlap: float
 
 
+class OverlapSweepOptions(BaseModel):
+    enabled: bool = True
+    minOverlap: float = 0.0
+    maxOverlap: float = 1.0
+    points: int = 21
+    returnToStart: bool = True
+
+
 class SimulationOptions(BaseModel):
     includeIntermediateStates: bool = True
     shots: int = 1000
     includeSamples: bool = True
     maxDisplayedBasisStates: int = 32
+    overlapSweep: OverlapSweepOptions = Field(default_factory=OverlapSweepOptions)
 
 
 class SimulationRequest(BaseModel):
@@ -132,6 +141,27 @@ class TheoryData(BaseModel):
     snapshots: List[TheorySnapshot]
 
 
+class OverlapSweepCurve(BaseModel):
+    occupation: List[int]
+    probabilities: List[float]
+
+
+class OverlapSweepStep(BaseModel):
+    step: int
+    column: int
+    label: str
+    overlapValues: List[float]
+    curves: List[OverlapSweepCurve]
+
+
+class OverlapSweepData(BaseModel):
+    minOverlap: float
+    maxOverlap: float
+    points: int
+    returnToStart: bool
+    steps: List[OverlapSweepStep]
+
+
 class SimulationResponse(BaseModel):
     metadata: SimulationMetadata
     validation: SimulationValidation
@@ -141,3 +171,4 @@ class SimulationResponse(BaseModel):
     sampledDistribution: Optional[List[SampledDistributionEntry]] = None
     debug: Optional[SimulationDebug] = None
     theory: Optional[TheoryData] = None
+    overlapSweep: Optional[OverlapSweepData] = None

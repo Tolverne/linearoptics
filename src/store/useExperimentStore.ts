@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import type {
   CircuitComponent,
+  Occupation,
+  OverlapSweepOptions,
   SimulationRequest,
   SimulationResponse,
 } from "@/types/simulation";
@@ -15,6 +17,9 @@ type ExperimentStore = {
   shots: number;
   includeIntermediateStates: boolean;
   includeSamples: boolean;
+
+  overlapSweep: OverlapSweepOptions;
+  selectedSweepOccupations: Occupation[];
 
   selectedComponentId: string | null;
   selectedStep: number;
@@ -32,6 +37,10 @@ type ExperimentStore = {
   setIncludeIntermediateStates: (
     includeIntermediateStates: boolean
   ) => void;
+
+  setOverlapSweep: (patch: Partial<OverlapSweepOptions>) => void;
+  toggleSweepOccupation: (occupation: Occupation) => void;
+  clearSweepOccupations: () => void;
 
   addComponent: (component: CircuitComponent) => void;
   updateComponent: (id: string, patch: Partial<CircuitComponent>) => void;
@@ -74,6 +83,41 @@ function normaliseInputState(inputState: number[], railCount: number): number[] 
   });
 }
 
+function occupationsEqual(a: Occupation, b: Occupation): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+function normaliseOverlapSweep(
+  patch: Partial<OverlapSweepOptions>,
+  current: OverlapSweepOptions
+): OverlapSweepOptions {
+  const next = {
+    ...current,
+    ...patch,
+  };
+
+  const minOverlap = Math.min(1, Math.max(0, Number(next.minOverlap)));
+  const maxOverlap = Math.min(1, Math.max(0, Number(next.maxOverlap)));
+
+  return {
+    enabled: Boolean(next.enabled),
+    minOverlap: Math.min(minOverlap, maxOverlap),
+    maxOverlap: Math.max(minOverlap, maxOverlap),
+    points: Math.min(101, Math.max(2, Math.floor(Number(next.points)))),
+    returnToStart: Boolean(next.returnToStart),
+  };
+}
+
+function defaultOverlapSweep(): OverlapSweepOptions {
+  return {
+    enabled: true,
+    minOverlap: 0,
+    maxOverlap: 1,
+    points: 21,
+    returnToStart: true,
+  };
+}
+
 function defaultState() {
   return {
     railCount: DEFAULT_RAIL_COUNT,
@@ -83,6 +127,9 @@ function defaultState() {
     shots: 1000,
     includeIntermediateStates: true,
     includeSamples: true,
+
+    overlapSweep: defaultOverlapSweep(),
+    selectedSweepOccupations: [] as Occupation[],
 
     selectedComponentId: null,
     selectedStep: 0,
@@ -129,6 +176,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
           : null,
         results: null,
         selectedStep: 0,
+        selectedSweepOccupations: [],
         error: null,
       };
     }),
@@ -146,6 +194,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
         inputState: nextInputState,
         results: null,
         selectedStep: 0,
+        selectedSweepOccupations: [],
         error: null,
       };
     }),
@@ -186,12 +235,42 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       error: null,
     }),
 
+  setOverlapSweep: (patch: Partial<OverlapSweepOptions>) =>
+    set((state) => ({
+      overlapSweep: normaliseOverlapSweep(patch, state.overlapSweep),
+      results: null,
+      selectedStep: 0,
+      selectedSweepOccupations: [],
+      error: null,
+    })),
+
+  toggleSweepOccupation: (occupation: Occupation) =>
+    set((state) => {
+      const exists = state.selectedSweepOccupations.some((current) =>
+        occupationsEqual(current, occupation)
+      );
+
+      return {
+        selectedSweepOccupations: exists
+          ? state.selectedSweepOccupations.filter(
+              (current) => !occupationsEqual(current, occupation)
+            )
+          : [...state.selectedSweepOccupations, occupation],
+      };
+    }),
+
+  clearSweepOccupations: () =>
+    set({
+      selectedSweepOccupations: [],
+    }),
+
   addComponent: (component: CircuitComponent) =>
     set((state) => ({
       components: [...state.components, component],
       selectedComponentId: component.id,
       results: null,
       selectedStep: 0,
+      selectedSweepOccupations: [],
       error: null,
     })),
 
@@ -210,6 +289,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
         components: nextComponents,
         results: null,
         selectedStep: 0,
+        selectedSweepOccupations: [],
         error: null,
       };
     }),
@@ -221,6 +301,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
         state.selectedComponentId === id ? null : state.selectedComponentId,
       results: null,
       selectedStep: 0,
+      selectedSweepOccupations: [],
       error: null,
     })),
 
@@ -243,6 +324,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
     set((state) => ({
       results,
       selectedStep: 0,
+      selectedSweepOccupations: [],
       inspectorMode:
         state.inspectorMode === "sampled" &&
         (!results?.sampledIntermediateStates ||
@@ -267,6 +349,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       selectedComponentId: null,
       selectedStep: 0,
       results: null,
+      selectedSweepOccupations: [],
       error: null,
     }),
 
@@ -284,6 +367,8 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       shots: example.options.shots,
       includeIntermediateStates: example.options.includeIntermediateStates,
       includeSamples: example.options.includeSamples,
+      overlapSweep: example.options.overlapSweep ?? defaultOverlapSweep(),
+      selectedSweepOccupations: [],
       selectedComponentId: null,
       selectedStep: 0,
       inspectorMode: "exact",
