@@ -177,26 +177,6 @@ const TopBar: React.FC = () => {
                 </div>
               </div>
 
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "#334155",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={overlapSweep.enabled}
-                  onChange={(event) =>
-                    setOverlapSweep({ enabled: event.target.checked })
-                  }
-                />
-                Enable sweep
-              </label>
             </div>
 
             <div
@@ -274,30 +254,6 @@ const TopBar: React.FC = () => {
                 />
               </div>
 
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "10px 0",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "#334155",
-                  cursor: overlapSweep.enabled ? "pointer" : "not-allowed",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={overlapSweep.returnToStart}
-                  disabled={!overlapSweep.enabled}
-                  onChange={(event) =>
-                    setOverlapSweep({
-                      returnToStart: event.target.checked,
-                    })
-                  }
-                />
-                Return to start
-              </label>
             </div>
           </div>
         </div>

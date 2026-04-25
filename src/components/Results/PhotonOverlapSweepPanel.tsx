@@ -133,10 +133,21 @@ const PhotonOverlapSweepPanel: React.FC = () => {
   const clearSweepOccupations = useExperimentStore(
     (state) => state.clearSweepOccupations
   );
+  const inspectorMode = useExperimentStore((state) => state.inspectorMode);
 
-  const sweepStep = useMemo(() => {
-    return findSweepStepForColumn(results?.overlapSweep?.steps ?? [], selectedStep);
-  }, [results?.overlapSweep?.steps, selectedStep]);
+    const activeSweepData =
+    inspectorMode === "sampled" && results?.sampledOverlapSweep
+        ? results.sampledOverlapSweep
+        : results?.overlapSweep;
+
+    const activeSweepLabel =
+    inspectorMode === "sampled" && results?.sampledOverlapSweep
+        ? "Experiment"
+        : "Theory";
+
+    const sweepStep = useMemo(() => {
+    return findSweepStepForColumn(activeSweepData?.steps ?? [], selectedStep);
+    }, [activeSweepData?.steps, selectedStep]);
 
   const selectedCurves = useMemo(() => {
     if (!sweepStep) return [];
@@ -183,7 +194,7 @@ const PhotonOverlapSweepPanel: React.FC = () => {
   if (selectedSweepOccupations.length === 0) {
     return (
       <div style={panelStyle}>
-        <PanelHeader label={sweepStep.label} />
+        <PanelHeader label={sweepStep.label} dataSource={activeSweepLabel} />
         <EmptyMessage>
           Click one or more bars in the Output Distribution panel to add output
           states to this graph.
@@ -192,7 +203,7 @@ const PhotonOverlapSweepPanel: React.FC = () => {
     );
   }
 
-    const shouldMirrorGraph = Boolean(results.overlapSweep.returnToStart);
+    const shouldMirrorGraph = Boolean(activeSweepData?.returnToStart);
 
     const rawOverlapValues = sweepStep.overlapValues;
 
@@ -248,7 +259,7 @@ const PhotonOverlapSweepPanel: React.FC = () => {
             />
             <span>HOM-style delay axis</span>
             </label>
-      <PanelHeader label={sweepStep.label} />
+      <PanelHeader label={sweepStep.label} dataSource={activeSweepLabel} />
 
       {displayedCurves.length === 0 ? (
         <EmptyMessage>
@@ -502,7 +513,13 @@ function PanelTitle() {
   );
 }
 
-function PanelHeader({ label }: { label: string }) {
+function PanelHeader({
+  label,
+  dataSource,
+}: {
+  label: string;
+  dataSource: string;
+}) {
   return (
     <div
       style={{
@@ -539,7 +556,7 @@ function PanelHeader({ label }: { label: string }) {
           color: "#0e7490",
         }}
       >
-        Active column: {label}
+        {dataSource} · Active column: {label}
       </div>
 
 
