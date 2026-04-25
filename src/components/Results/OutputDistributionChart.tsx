@@ -4,6 +4,7 @@ import type {
   BasisStateSummary,
   IntermediateState,
   Occupation,
+  OverlapSweepStep,
   SampledDistributionEntry,
   SampledIntermediateState,
 } from "@/types/simulation";
@@ -45,6 +46,30 @@ function sampledStateToChartData(
     label: formatOccupationAsKet(entry.occupation),
     occupation: entry.occupation,
     value: entry.frequency,
+  }));
+}
+
+function sweepStepToChartData(
+  step: OverlapSweepStep | null,
+  selectedOverlap: number
+): ChartDatum[] {
+  if (!step || step.overlapValues.length === 0) return [];
+
+  let closestIndex = 0;
+  let closestDistance = Infinity;
+
+  step.overlapValues.forEach((overlap, index) => {
+    const distance = Math.abs(overlap - selectedOverlap);
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestIndex = index;
+    }
+  });
+
+  return step.curves.map((curve) => ({
+    label: formatOccupationAsKet(curve.occupation),
+    occupation: curve.occupation,
+    value: curve.probabilities[closestIndex] ?? 0,
   }));
 }
 
@@ -128,6 +153,7 @@ function findStateForSelectedColumn<T extends { column: number }>(
 const OutputDistributionChart: React.FC = () => {
   const results = useExperimentStore((state) => state.results);
   const selectedStep = useExperimentStore((state) => state.selectedStep);
+  const selectedOverlap = useExperimentStore((state) => state.overlap);
   const inspectorMode = useExperimentStore((state) => state.inspectorMode);
   const setInspectorMode = useExperimentStore((state) => state.setInspectorMode);
 
@@ -140,39 +166,11 @@ const OutputDistributionChart: React.FC = () => {
 
   if (!results) {
     return (
-      <div
-        style={{
-          border: "1px solid #cbd5e1",
-          borderRadius: 16,
-          background: "#ffffff",
-          padding: 16,
-          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 16,
-            fontWeight: 800,
-            color: "#0f172a",
-            marginBottom: 12,
-          }}
-        >
-          Output Distribution
-        </div>
-
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 12,
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            fontSize: 13,
-            color: "#475569",
-            lineHeight: 1.5,
-          }}
-        >
+      <div style={panelStyle}>
+        <PanelTitle />
+        <EmptyMessage>
           Run a simulation to see the distribution for each circuit column.
-        </div>
+        </EmptyMessage>
       </div>
     );
   }
@@ -191,15 +189,29 @@ const OutputDistributionChart: React.FC = () => {
     selectedStep
   );
 
-  const chartData =
-    effectiveMode === "sampled"
-      ? sampledStateToChartData(currentSampledState)
+  const theorySweepStep = findStateForSelectedColumn(
+    results.overlapSweep?.steps ?? [],
+    selectedStep
+  );
+
+  const sampledSweepStep = findStateForSelectedColumn(
+    results.sampledOverlapSweep?.steps ?? [],
+    selectedStep
+  );
+
+const chartData =
+  effectiveMode === "sampled"
+    ? sampledSweepStep
+      ? sweepStepToChartData(sampledSweepStep, selectedOverlap)
+      : sampledStateToChartData(currentSampledState)
+    : theorySweepStep
+      ? sweepStepToChartData(theorySweepStep, selectedOverlap)
       : exactStateToChartData(currentExactState);
 
-  const activeColumn =
-    effectiveMode === "sampled"
-      ? currentSampledState?.column
-      : currentExactState?.column;
+const activeColumn =
+  effectiveMode === "sampled"
+    ? sampledSweepStep?.column ?? currentSampledState?.column
+    : theorySweepStep?.column ?? currentExactState?.column;
 
   const currentColumnLabel =
     typeof activeColumn === "number"
@@ -208,55 +220,24 @@ const OutputDistributionChart: React.FC = () => {
         : "Input"
       : "No column selected";
 
+const dataSourceLabel =
+  effectiveMode === "sampled"
+    ? `experiment at overlap ${selectedOverlap.toFixed(2)}`
+    : `theory at overlap ${selectedOverlap.toFixed(2)}`;
+
   if (chartData.length === 0) {
     return (
-      <div
-        style={{
-          border: "1px solid #cbd5e1",
-          borderRadius: 16,
-          background: "#ffffff",
-          padding: 16,
-          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 16,
-            fontWeight: 800,
-            color: "#0f172a",
-            marginBottom: 12,
-          }}
-        >
-          Output Distribution
-        </div>
-
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 12,
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            fontSize: 13,
-            color: "#475569",
-            lineHeight: 1.5,
-          }}
-        >
+      <div style={panelStyle}>
+        <PanelTitle />
+        <EmptyMessage>
           No distribution data is available for the selected column.
-        </div>
+        </EmptyMessage>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        border: "1px solid #cbd5e1",
-        borderRadius: 16,
-        background: "#ffffff",
-        padding: 16,
-        boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-      }}
-    >
+    <div style={panelStyle}>
       <div
         style={{
           display: "flex",
@@ -268,24 +249,17 @@ const OutputDistributionChart: React.FC = () => {
         }}
       >
         <div>
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 800,
-              color: "#0f172a",
-              marginBottom: 4,
-            }}
-          >
-            Output Distribution
-          </div>
+          <PanelTitle />
           <div
             style={{
               fontSize: 13,
               color: "#475569",
+              lineHeight: 1.5,
             }}
           >
             Click bars to add or remove output states from the photon-overlap
-            sweep graph.
+            sweep graph. In Theory mode, this chart follows the selected overlap
+            value.
           </div>
         </div>
 
@@ -315,6 +289,23 @@ const OutputDistributionChart: React.FC = () => {
             }}
           >
             {currentColumnLabel}
+          </div>
+
+          <div
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              background: effectiveMode === "sampled" ? "#fef3c7" : "#eff6ff",
+              border:
+                effectiveMode === "sampled"
+                  ? "1px solid #fde68a"
+                  : "1px solid #bfdbfe",
+              fontSize: 13,
+              fontWeight: 700,
+              color: effectiveMode === "sampled" ? "#b45309" : "#1d4ed8",
+            }}
+          >
+            {dataSourceLabel}
           </div>
         </div>
       </div>
@@ -434,6 +425,47 @@ const OutputDistributionChart: React.FC = () => {
       )}
     </div>
   );
+};
+
+function PanelTitle() {
+  return (
+    <div
+      style={{
+        fontSize: 16,
+        fontWeight: 800,
+        color: "#0f172a",
+        marginBottom: 4,
+      }}
+    >
+      Output Distribution
+    </div>
+  );
+}
+
+function EmptyMessage({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        padding: 12,
+        borderRadius: 12,
+        background: "#f8fafc",
+        border: "1px solid #e2e8f0",
+        fontSize: 13,
+        color: "#475569",
+        lineHeight: 1.5,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+const panelStyle: React.CSSProperties = {
+  border: "1px solid #cbd5e1",
+  borderRadius: 16,
+  background: "#ffffff",
+  padding: 16,
+  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
 };
 
 export default OutputDistributionChart;

@@ -200,11 +200,14 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
     }),
 
   setOverlap: (overlap: number) =>
-    set({
-      overlap: Math.min(1, Math.max(0, overlap)),
-      results: null,
-      selectedStep: 0,
-      error: null,
+    set((state) => {
+      const minOverlap = state.overlapSweep.minOverlap;
+      const maxOverlap = state.overlapSweep.maxOverlap;
+
+      return {
+        overlap: Math.min(maxOverlap, Math.max(minOverlap, overlap)),
+        error: null,
+      };
     }),
 
   setShots: (shots: number) =>
@@ -236,13 +239,21 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
     }),
 
   setOverlapSweep: (patch: Partial<OverlapSweepOptions>) =>
-    set((state) => ({
-      overlapSweep: normaliseOverlapSweep(patch, state.overlapSweep),
-      results: null,
-      selectedStep: 0,
-      selectedSweepOccupations: [],
-      error: null,
-    })),
+    set((state) => {
+      const nextSweep = normaliseOverlapSweep(patch, state.overlapSweep);
+
+      return {
+        overlapSweep: nextSweep,
+        overlap: Math.min(
+          nextSweep.maxOverlap,
+          Math.max(nextSweep.minOverlap, state.overlap)
+        ),
+        results: null,
+        selectedStep: 0,
+        selectedSweepOccupations: [],
+        error: null,
+      };
+    }),
 
   toggleSweepOccupation: (occupation: Occupation) =>
     set((state) => {

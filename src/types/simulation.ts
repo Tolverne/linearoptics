@@ -166,6 +166,7 @@ export type SimulationResponse = {
   debug?: SimulationDebug;
   theory?: TheoryData;
   overlapSweep?: OverlapSweepData;
+  sampledOverlapSweep?: OverlapSweepData;
 };
 
 export type ToolboxItemType = "beam_splitter" | "phase_shifter" | "swap";

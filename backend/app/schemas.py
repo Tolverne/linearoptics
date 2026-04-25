@@ -172,3 +172,4 @@ class SimulationResponse(BaseModel):
     debug: Optional[SimulationDebug] = None
     theory: Optional[TheoryData] = None
     overlapSweep: Optional[OverlapSweepData] = None
+    sampledOverlapSweep: Optional[OverlapSweepData] = None

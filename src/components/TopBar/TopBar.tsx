@@ -118,14 +118,14 @@ const TopBar: React.FC = () => {
           >
             <div>
               <label htmlFor="topbar-overlap" style={labelStyle}>
-                Current photon overlap
+                Selected photon overlap
               </label>
 
               <input
                 id="topbar-overlap"
                 type="range"
-                min={0}
-                max={1}
+                min={overlapSweep.minOverlap}
+                max={overlapSweep.maxOverlap}
                 step={0.01}
                 value={overlap}
                 onChange={(event) => setOverlap(Number(event.target.value))}
@@ -144,9 +144,9 @@ const TopBar: React.FC = () => {
                   marginTop: 4,
                 }}
               >
-                <span>Distinguishable</span>
-                <span>{overlap.toFixed(2)}</span>
-                <span>Identical</span>
+                <span>{overlapSweep.minOverlap.toFixed(2)}</span>
+                <span>Selected: {overlap.toFixed(2)}</span>
+                <span>{overlapSweep.maxOverlap.toFixed(2)}</span>
               </div>
             </div>
 
@@ -198,6 +198,7 @@ const TopBar: React.FC = () => {
                 >
                   Photon overlap sweep
                 </div>
+
                 <div
                   style={{
                     fontSize: 12,
@@ -244,6 +245,7 @@ const TopBar: React.FC = () => {
                 <label htmlFor="sweep-min-overlap" style={labelStyle}>
                   Min overlap
                 </label>
+
                 <input
                   id="sweep-min-overlap"
                   type="number"
@@ -265,6 +267,7 @@ const TopBar: React.FC = () => {
                 <label htmlFor="sweep-max-overlap" style={labelStyle}>
                   Max overlap
                 </label>
+
                 <input
                   id="sweep-max-overlap"
                   type="number"
@@ -286,6 +289,7 @@ const TopBar: React.FC = () => {
                 <label htmlFor="sweep-points" style={labelStyle}>
                   Overlap values
                 </label>
+
                 <input
                   id="sweep-points"
                   type="number"

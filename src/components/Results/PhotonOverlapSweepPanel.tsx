@@ -24,6 +24,16 @@ const LINE_COLORS = [
   "#4f46e5",
 ];
 
+function mirrorValues(values: number[], shouldMirror: boolean): number[] {
+  if (!shouldMirror || values.length <= 1) return values;
+  return [...values, ...values.slice(0, -1).reverse()];
+}
+
+function mirrorProbabilities(values: number[], shouldMirror: boolean): number[] {
+  if (!shouldMirror || values.length <= 1) return values;
+  return [...values, ...values.slice(0, -1).reverse()];
+}
+
 function formatOccupationAsKet(occupation: Occupation): string {
   return `|${occupation.join(",")}⟩`;
 }
@@ -154,12 +164,15 @@ const PhotonOverlapSweepPanel: React.FC = () => {
   }
 
   const overlapValues = sweepStep.overlapValues;
-  const xMin = Math.min(...overlapValues);
-  const xMax = Math.max(...overlapValues);
+  const shouldMirrorGraph = Boolean(results.overlapSweep.returnToStart);
+  const displayedOverlapValues = mirrorValues(overlapValues, shouldMirrorGraph);
+  const displayedCurves = selectedCurves.map((curve) => ({...curve,probabilities: mirrorProbabilities(curve.probabilities, shouldMirrorGraph),}));
+  const xMin = Math.min(...displayedOverlapValues);
+  const xMax = Math.max(...displayedOverlapValues);
 
   const maxProbability = Math.max(
     1e-9,
-    ...selectedCurves.flatMap((curve) => curve.probabilities)
+    ...displayedCurves.flatMap((curve) => curve.probabilities)
   );
 
   const yMax = Math.min(1, Math.max(0.05, maxProbability * 1.08));
@@ -173,7 +186,7 @@ const PhotonOverlapSweepPanel: React.FC = () => {
     <div style={panelStyle}>
       <PanelHeader label={sweepStep.label} />
 
-      {selectedCurves.length === 0 ? (
+      {displayedCurves.length === 0 ? (
         <EmptyMessage>
           The selected output state is not present in this sweep data. Try
           selecting another output state from the distribution chart.
@@ -289,10 +302,10 @@ const PhotonOverlapSweepPanel: React.FC = () => {
                 Probability
               </text>
 
-              {selectedCurves.map((curve, index) => {
+              {displayedCurves.map((curve, index) => {
                 const color = LINE_COLORS[index % LINE_COLORS.length];
                 const path = makePath(
-                  overlapValues,
+                  displayedOverlapValues,
                   curve.probabilities,
                   xMin,
                   xMax,
@@ -348,7 +361,7 @@ const PhotonOverlapSweepPanel: React.FC = () => {
               alignItems: "center",
             }}
           >
-            {selectedCurves.map((curve, index) => {
+            {displayedCurves.map((curve, index) => {
               const color = LINE_COLORS[index % LINE_COLORS.length];
 
               return (
