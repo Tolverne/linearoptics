@@ -420,6 +420,7 @@ def _compute_overlap_sweep_data(
         return None
 
     total_columns = columns_used(request.components)
+
     if total_columns <= 0:
         return OverlapSweepData(
             minOverlap=sweep_options.minOverlap,
@@ -430,6 +431,7 @@ def _compute_overlap_sweep_data(
         )
 
     input_state = build_basic_state(request.inputState)
+
     overlap_values = _generate_overlap_values(
         min_overlap=sweep_options.minOverlap,
         max_overlap=sweep_options.maxOverlap,
@@ -447,7 +449,7 @@ def _compute_overlap_sweep_data(
 
         probabilities_by_occupation: Dict[tuple[int, ...], List[float]] = {}
 
-        for overlap in overlap_values:
+        for overlap_index, overlap in enumerate(overlap_values):
             distribution = _compute_exact_distribution_for_overlap(
                 circuit=prefix_circuit,
                 input_state=input_state,
@@ -465,14 +467,11 @@ def _compute_overlap_sweep_data(
 
             for key in all_known_keys:
                 if key not in probabilities_by_occupation:
-                    probabilities_by_occupation[key] = [0.0] * (
-                        len(overlap_values)
-                    )
+                    probabilities_by_occupation[key] = [0.0] * len(overlap_values)
 
-                probabilities_by_occupation[key][
-                    len(probabilities_by_occupation[key])
-                    - (len(overlap_values) - overlap_values.index(overlap))
-                ] = current_probabilities.get(key, 0.0)
+                probabilities_by_occupation[key][overlap_index] = (
+                    current_probabilities.get(key, 0.0)
+                )
 
         curves: List[OverlapSweepCurve] = []
 
