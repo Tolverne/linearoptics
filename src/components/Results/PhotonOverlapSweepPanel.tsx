@@ -34,17 +34,32 @@ function mirrorProbabilities(values: number[], shouldMirror: boolean): number[] 
   return [...values, ...values.slice(0, -1).reverse()];
 }
 
-
-function makeHomDelayValues(length: number): number[] {
-  if (length <= 1) return [0];
-
-  const midpoint = (length - 1) / 2;
-
-  return Array.from({ length }, (_, index) => {
-    if (midpoint === 0) return 0;
-    return (index - midpoint) / midpoint;
-  });
+function delayFromOverlap(overlap: number, sigma = 1): number {
+  const safeOverlap = Math.min(1, Math.max(1e-6, overlap));
+  return sigma * Math.sqrt(-Math.log(safeOverlap));
 }
+
+function makeHomDelayValues(overlapValues: number[], sigma = 1): number[] {
+  if (overlapValues.length <= 1) return [0];
+
+  const negativeBranch = overlapValues.map(
+    (overlap) => -delayFromOverlap(overlap, sigma)
+  );
+
+  const positiveBranch = overlapValues
+    .slice(0, -1)
+    .reverse()
+    .map((overlap) => delayFromOverlap(overlap, sigma));
+
+  return [...negativeBranch, ...positiveBranch];
+}
+
+function makeHomProbabilities(probabilities: number[]): number[] {
+  if (probabilities.length <= 1) return probabilities;
+  return [...probabilities, ...probabilities.slice(0, -1).reverse()];
+}
+
+
 
 function formatOccupationAsKet(occupation: Occupation): string {
   return `|${occupation.join(",")}⟩`;
@@ -177,19 +192,20 @@ const PhotonOverlapSweepPanel: React.FC = () => {
     );
   }
 
-    const rawOverlapValues = sweepStep.overlapValues;
     const shouldMirrorGraph = Boolean(results.overlapSweep.returnToStart);
 
-    const displayedOverlapValues = mirrorValues(rawOverlapValues, shouldMirrorGraph);
+    const rawOverlapValues = sweepStep.overlapValues;
+
+    const xValues = showHomDelay
+    ? makeHomDelayValues(rawOverlapValues)
+    : rawOverlapValues;
 
     const displayedCurves = selectedCurves.map((curve) => ({
     ...curve,
-    probabilities: mirrorProbabilities(curve.probabilities, shouldMirrorGraph),
+    probabilities: showHomDelay
+        ? makeHomProbabilities(curve.probabilities)
+        : curve.probabilities,
     }));
-
-    const xValues = showHomDelay
-    ? makeHomDelayValues(displayedOverlapValues.length)
-    : displayedOverlapValues;
 
     const xMin = Math.min(...xValues);
     const xMax = Math.max(...xValues);
@@ -335,7 +351,7 @@ const PhotonOverlapSweepPanel: React.FC = () => {
                 fontWeight={700}
                 fill="#334155"
               >
-                {showHomDelay ? "Relative photon delay" : "Photon overlap"}
+                {showHomDelay ? "Relative photon delay τ / σ" : "Photon overlap η"}
               </text>
 
               <text
@@ -387,12 +403,12 @@ const PhotonOverlapSweepPanel: React.FC = () => {
                           r={3}
                           fill={color}
                         >
-                          <title>
-                                {formatOccupationAsKet(curve.occupation)} at{" "}
-                                {showHomDelay
-                                    ? `delay = ${xValue.toFixed(3)}`
-                                    : `η = ${xValue.toFixed(3)}`}
-                                : {probability.toFixed(4)}
+                            <title>
+                            {formatOccupationAsKet(curve.occupation)} at{" "}
+                            {showHomDelay
+                                ? `τ/σ = ${xValue.toFixed(3)}`
+                                : `η = ${xValue.toFixed(3)}`}
+                            : {probability.toFixed(4)}
                             </title>
                         </circle>
                       );
