@@ -34,6 +34,18 @@ function mirrorProbabilities(values: number[], shouldMirror: boolean): number[] 
   return [...values, ...values.slice(0, -1).reverse()];
 }
 
+
+function makeHomDelayValues(length: number): number[] {
+  if (length <= 1) return [0];
+
+  const midpoint = (length - 1) / 2;
+
+  return Array.from({ length }, (_, index) => {
+    if (midpoint === 0) return 0;
+    return (index - midpoint) / midpoint;
+  });
+}
+
 function formatOccupationAsKet(occupation: Occupation): string {
   return `|${occupation.join(",")}⟩`;
 }
@@ -95,7 +107,9 @@ function makePath(
     .join(" ");
 }
 
+
 const PhotonOverlapSweepPanel: React.FC = () => {
+  const [showHomDelay, setShowHomDelay] = React.useState(true);
   const results = useExperimentStore((state) => state.results);
   const selectedStep = useExperimentStore((state) => state.selectedStep);
   const selectedSweepOccupations = useExperimentStore(
@@ -163,12 +177,22 @@ const PhotonOverlapSweepPanel: React.FC = () => {
     );
   }
 
-  const overlapValues = sweepStep.overlapValues;
-  const shouldMirrorGraph = Boolean(results.overlapSweep.returnToStart);
-  const displayedOverlapValues = mirrorValues(overlapValues, shouldMirrorGraph);
-  const displayedCurves = selectedCurves.map((curve) => ({...curve,probabilities: mirrorProbabilities(curve.probabilities, shouldMirrorGraph),}));
-  const xMin = Math.min(...displayedOverlapValues);
-  const xMax = Math.max(...displayedOverlapValues);
+    const rawOverlapValues = sweepStep.overlapValues;
+    const shouldMirrorGraph = Boolean(results.overlapSweep.returnToStart);
+
+    const displayedOverlapValues = mirrorValues(rawOverlapValues, shouldMirrorGraph);
+
+    const displayedCurves = selectedCurves.map((curve) => ({
+    ...curve,
+    probabilities: mirrorProbabilities(curve.probabilities, shouldMirrorGraph),
+    }));
+
+    const xValues = showHomDelay
+    ? makeHomDelayValues(displayedOverlapValues.length)
+    : displayedOverlapValues;
+
+    const xMin = Math.min(...xValues);
+    const xMax = Math.max(...xValues);
 
   const maxProbability = Math.max(
     1e-9,
@@ -182,8 +206,32 @@ const PhotonOverlapSweepPanel: React.FC = () => {
   const plotWidth = CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT;
   const plotHeight = CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
 
+  
+
   return (
     <div style={panelStyle}>
+        <label
+            style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                borderRadius: 10,
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#334155",
+                cursor: "pointer",
+            }}
+            >
+            <input
+                type="checkbox"
+                checked={showHomDelay}
+                onChange={(event) => setShowHomDelay(event.target.checked)}
+            />
+            <span>HOM-style delay axis</span>
+            </label>
       <PanelHeader label={sweepStep.label} />
 
       {displayedCurves.length === 0 ? (
@@ -287,7 +335,7 @@ const PhotonOverlapSweepPanel: React.FC = () => {
                 fontWeight={700}
                 fill="#334155"
               >
-                Photon overlap
+                {showHomDelay ? "Relative photon delay" : "Photon overlap"}
               </text>
 
               <text
@@ -305,12 +353,12 @@ const PhotonOverlapSweepPanel: React.FC = () => {
               {displayedCurves.map((curve, index) => {
                 const color = LINE_COLORS[index % LINE_COLORS.length];
                 const path = makePath(
-                  displayedOverlapValues,
-                  curve.probabilities,
-                  xMin,
-                  xMax,
-                  yMax
-                );
+                            xValues,
+                            curve.probabilities,
+                            xMin,
+                            xMax,
+                            yMax
+                            );
 
                 return (
                   <g key={curve.occupation.join(",")}>
@@ -323,10 +371,10 @@ const PhotonOverlapSweepPanel: React.FC = () => {
                       strokeLinecap="round"
                     />
 
-                    {overlapValues.map((overlap, pointIndex) => {
+                    {xValues.map((xValue, pointIndex) => {
                       const probability = curve.probabilities[pointIndex] ?? 0;
                       const xRatio =
-                        xMax === xMin ? 0 : (overlap - xMin) / (xMax - xMin);
+                        xMax === xMin ? 0 : (xValue - xMin) / (xMax - xMin);
                       const yRatio = yMax === 0 ? 0 : probability / yMax;
                       const cx = PADDING_LEFT + xRatio * plotWidth;
                       const cy = PADDING_TOP + (1 - yRatio) * plotHeight;
@@ -340,9 +388,12 @@ const PhotonOverlapSweepPanel: React.FC = () => {
                           fill={color}
                         >
                           <title>
-                            {formatOccupationAsKet(curve.occupation)} at η ={" "}
-                            {overlap.toFixed(3)}: {probability.toFixed(4)}
-                          </title>
+                                {formatOccupationAsKet(curve.occupation)} at{" "}
+                                {showHomDelay
+                                    ? `delay = ${xValue.toFixed(3)}`
+                                    : `η = ${xValue.toFixed(3)}`}
+                                : {probability.toFixed(4)}
+                            </title>
                         </circle>
                       );
                     })}
@@ -474,6 +525,8 @@ function PanelHeader({ label }: { label: string }) {
       >
         Active column: {label}
       </div>
+
+
     </div>
   );
 }

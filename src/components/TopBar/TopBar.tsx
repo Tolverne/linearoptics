@@ -30,8 +30,8 @@ const labelStyle: React.CSSProperties = {
 const TopBar: React.FC = () => {
   const error = useExperimentStore((state) => state.error);
 
-  const overlap = useExperimentStore((state) => state.overlap);
-  const setOverlap = useExperimentStore((state) => state.setOverlap);
+  // const overlap = useExperimentStore((state) => state.overlap);
+  // const setOverlap = useExperimentStore((state) => state.setOverlap);
 
   const shots = useExperimentStore((state) => state.shots);
   const setShots = useExperimentStore((state) => state.setShots);
@@ -116,40 +116,7 @@ const TopBar: React.FC = () => {
               alignItems: "end",
             }}
           >
-            <div>
-              <label htmlFor="topbar-overlap" style={labelStyle}>
-                Selected photon overlap
-              </label>
-
-              <input
-                id="topbar-overlap"
-                type="range"
-                min={overlapSweep.minOverlap}
-                max={overlapSweep.maxOverlap}
-                step={0.01}
-                value={overlap}
-                onChange={(event) => setOverlap(Number(event.target.value))}
-                style={{
-                  width: "100%",
-                  cursor: "pointer",
-                }}
-              />
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 11,
-                  color: "#64748b",
-                  marginTop: 4,
-                }}
-              >
-                <span>{overlapSweep.minOverlap.toFixed(2)}</span>
-                <span>Selected: {overlap.toFixed(2)}</span>
-                <span>{overlapSweep.maxOverlap.toFixed(2)}</span>
-              </div>
-            </div>
-
+            
             <div>
               <label htmlFor="topbar-shots" style={labelStyle}>
                 Samples

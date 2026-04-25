@@ -150,12 +150,16 @@ function findStateForSelectedColumn<T extends { column: number }>(
   return states[safeIndex] ?? null;
 }
 
+
+
 const OutputDistributionChart: React.FC = () => {
   const results = useExperimentStore((state) => state.results);
   const selectedStep = useExperimentStore((state) => state.selectedStep);
   const selectedOverlap = useExperimentStore((state) => state.overlap);
   const inspectorMode = useExperimentStore((state) => state.inspectorMode);
   const setInspectorMode = useExperimentStore((state) => state.setInspectorMode);
+  const overlapSweep = useExperimentStore((state) => state.overlapSweep);
+  const setOverlap = useExperimentStore((state) => state.setOverlap);
 
   const selectedSweepOccupations = useExperimentStore(
     (state) => state.selectedSweepOccupations
@@ -199,7 +203,7 @@ const OutputDistributionChart: React.FC = () => {
     selectedStep
   );
 
-const chartData =
+  const chartData =
   effectiveMode === "sampled"
     ? sampledSweepStep
       ? sweepStepToChartData(sampledSweepStep, selectedOverlap)
@@ -208,7 +212,7 @@ const chartData =
       ? sweepStepToChartData(theorySweepStep, selectedOverlap)
       : exactStateToChartData(currentExactState);
 
-const activeColumn =
+  const activeColumn =
   effectiveMode === "sampled"
     ? sampledSweepStep?.column ?? currentSampledState?.column
     : theorySweepStep?.column ?? currentExactState?.column;
@@ -220,7 +224,7 @@ const activeColumn =
         : "Input"
       : "No column selected";
 
-const dataSourceLabel =
+  const dataSourceLabel =
   effectiveMode === "sampled"
     ? `experiment at overlap ${selectedOverlap.toFixed(2)}`
     : `theory at overlap ${selectedOverlap.toFixed(2)}`;
@@ -410,6 +414,59 @@ const dataSourceLabel =
         </div>
       </div>
 
+          <div
+            style={{
+              marginTop: 14,
+              padding: 12,
+              borderRadius: 12,
+              border: "1px solid #e2e8f0",
+              background: "#f8fafc",
+            }}
+          >
+            <label
+              htmlFor="output-selected-overlap"
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 800,
+                color: "#475569",
+                marginBottom: 8,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
+            >
+              Selected photon overlap
+            </label>
+
+            <input
+              id="output-selected-overlap"
+              type="range"
+              min={overlapSweep.minOverlap}
+              max={overlapSweep.maxOverlap}
+              step={0.01}
+              value={selectedOverlap}
+              onChange={(event) => setOverlap(Number(event.target.value))}
+              style={{
+                width: "100%",
+                cursor: "pointer",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 11,
+                color: "#64748b",
+                marginTop: 4,
+              }}
+            >
+              <span>{overlapSweep.minOverlap.toFixed(2)}</span>
+              <span>Selected: {selectedOverlap.toFixed(2)}</span>
+              <span>{overlapSweep.maxOverlap.toFixed(2)}</span>
+            </div>
+          </div>
+          
       {selectedSweepOccupations.length > 0 && (
         <div
           style={{
