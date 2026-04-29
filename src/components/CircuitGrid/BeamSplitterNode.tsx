@@ -1,5 +1,8 @@
 import React from "react";
 import type { BeamSplitterComponent } from "@/types/simulation";
+import { formatNiceNumber } from "@/utils/formatNumber";
+import { useExperimentStore } from "@/store/useExperimentStore";
+
 
 type BeamSplitterNodeProps = {
   component: BeamSplitterComponent;
@@ -30,7 +33,13 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
   const mirrorFill = isSelected ? "#dbeafe" : "#e2e8f0";
   const eraseColor = "#f8fafc";
 
-  const thetaLabel = component.params.theta.toFixed(2);
+
+
+    const mode = useExperimentStore((s) => s.numericDisplayMode);
+
+    const thetaLabel = formatNiceNumber(component.params.theta, {
+        mode,
+    });
 
   const railYTop = 25;
   const railYBottom = 75;
