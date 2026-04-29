@@ -7,6 +7,8 @@ import type {
   SimulationResponse,
 } from "@/types/simulation";
 
+export type NumericDisplayMode = "decimal" | "exact" | "both";
+
 type InspectorMode = "exact" | "sampled";
 
 type ExperimentStore = {
@@ -24,6 +26,7 @@ type ExperimentStore = {
   selectedComponentId: string | null;
   selectedStep: number;
   inspectorMode: InspectorMode;
+  numericDisplayMode: NumericDisplayMode;
   results: SimulationResponse | null;
 
   isRunning: boolean;
@@ -49,6 +52,7 @@ type ExperimentStore = {
   setSelectedComponentId: (id: string | null) => void;
   setSelectedStep: (step: number) => void;
   setInspectorMode: (mode: InspectorMode) => void;
+  setNumericDisplayMode: (mode: NumericDisplayMode) => void;
 
   setResults: (results: SimulationResponse | null) => void;
   setError: (error: string | null) => void;
@@ -134,6 +138,7 @@ function defaultState() {
     selectedComponentId: null,
     selectedStep: 0,
     inspectorMode: "exact" as const,
+    numericDisplayMode: "exact" as const,
     results: null,
 
     isRunning: false,
@@ -143,6 +148,8 @@ function defaultState() {
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
   ...defaultState(),
+
+  setNumericDisplayMode: (mode) => set({ numericDisplayMode: mode }),
 
   setRailCount: (railCount: number) =>
     set((state) => {
@@ -383,6 +390,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       selectedComponentId: null,
       selectedStep: 0,
       inspectorMode: "exact",
+      numericDisplayMode: "exact",
       results: null,
       isRunning: false,
       error: null,
