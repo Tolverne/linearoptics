@@ -5,6 +5,8 @@ import ClearButton from "./ClearButton";
 import ResetButton from "./ResetButton";
 import { useExperimentStore } from "@/store/useExperimentStore";
 
+
+
 const numberInputStyle: React.CSSProperties = {
   width: "100%",
   padding: "10px 12px",
@@ -38,6 +40,11 @@ const TopBar: React.FC = () => {
 
   const overlapSweep = useExperimentStore((state) => state.overlapSweep);
   const setOverlapSweep = useExperimentStore((state) => state.setOverlapSweep);
+
+const numericDisplayMode = useExperimentStore((state) => state.numericDisplayMode);
+const setNumericDisplayMode = useExperimentStore(
+    (state) => state.setNumericDisplayMode
+);
 
   return (
     <div
@@ -111,7 +118,7 @@ const TopBar: React.FC = () => {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 140px",
+              gridTemplateColumns: "1fr 140px 160px",
               gap: 12,
               alignItems: "end",
             }}
@@ -134,6 +141,26 @@ const TopBar: React.FC = () => {
                 style={numberInputStyle}
               />
             </div>
+
+                      <div>
+                          <label htmlFor="numeric-display-mode" style={labelStyle}>
+                              Number display
+                          </label>
+
+                          <select
+                              id="numeric-display-mode"
+                              value={numericDisplayMode}
+                              onChange={(event) =>
+                                  setNumericDisplayMode(event.target.value as "decimal" | "exact" | "both")
+                              }
+                              style={numberInputStyle}
+                          >
+                              <option value="decimal">Decimal</option>
+                              <option value="exact">Exact</option>
+                              <option value="both">Both</option>
+                          </select>
+                      </div>
+
           </div>
 
           <div

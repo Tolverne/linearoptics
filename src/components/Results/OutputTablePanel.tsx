@@ -1,5 +1,8 @@
 import React from "react";
 import { useExperimentStore } from "@/store/useExperimentStore";
+
+import { formatNiceNumber } from "@/utils/formatNumber";
+
 import type {
   FinalDistributionEntry,
   SampledDistributionEntry,
@@ -39,7 +42,7 @@ function buildRows(
 
 const OutputTablePanel: React.FC = () => {
   const results = useExperimentStore((state) => state.results);
-
+  const mode = useExperimentStore((state) => state.numericDisplayMode);
   if (!results || results.finalDistribution.length === 0) {
     return (
       <div
@@ -204,7 +207,10 @@ const OutputTablePanel: React.FC = () => {
                     color: "#334155",
                   }}
                 >
-                  {row.probability.toFixed(4)}
+                        {formatNiceNumber(row.probability, {
+                            mode,
+                            decimalPlaces: 4,
+                        })}
                 </td>
 
                 <td
@@ -226,9 +232,12 @@ const OutputTablePanel: React.FC = () => {
                     color: "#334155",
                   }}
                 >
-                  {typeof row.frequency === "number"
-                    ? row.frequency.toFixed(4)
-                    : "—"}
+                        {typeof row.frequency === "number"
+                            ? formatNiceNumber(row.frequency, {
+                                mode,
+                                decimalPlaces: 4,
+                            })
+                            : "—"}
                 </td>
               </tr>
             ))}

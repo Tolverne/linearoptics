@@ -48,7 +48,10 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
     <button
       type="button"
       onClick={onSelect}
-      title={`Beam Splitter (θ = ${component.params.theta.toFixed(3)})`}
+          title={`Beam Splitter (θ = ${formatNiceNumber(component.params.theta, {
+              mode,
+              decimalPlaces: 3,
+          })})`}
       style={{
         position: "absolute",
         left: component.column * columnWidth + xPad,

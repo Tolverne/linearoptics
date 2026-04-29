@@ -1,5 +1,10 @@
 import React from "react";
 import type { PhaseShifterComponent } from "@/types/simulation";
+import { useExperimentStore } from "@/store/useExperimentStore";
+import { formatNiceNumber } from "@/utils/formatNumber";
+
+
+
 
 type PhaseShifterNodeProps = {
   component: PhaseShifterComponent;
@@ -9,6 +14,8 @@ type PhaseShifterNodeProps = {
   onSelect?: () => void;
 };
 
+
+
 const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
   component,
   rowHeight = 72,
@@ -16,11 +23,16 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
   isSelected = false,
   onSelect,
 }) => {
+    const mode = useExperimentStore((state) => state.numericDisplayMode);
+    const phiLabel = formatNiceNumber(component.params.phi, {
+        mode,
+        decimalPlaces: 3,
+    });
   return (
     <button
       type="button"
       onClick={onSelect}
-      title={`Phase Shifter (φ = ${component.params.phi.toFixed(3)})`}
+          title={`Phase Shifter (φ = ${phiLabel})`}
       style={{
         position: "absolute",
         left: component.column * columnWidth + columnWidth * 0.24,
@@ -58,7 +70,7 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
           marginTop: 2,
         }}
       >
-        {component.params.phi.toFixed(2)}
+              {phiLabel}
       </div>
     </button>
   );

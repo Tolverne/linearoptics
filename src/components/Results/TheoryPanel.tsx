@@ -1,6 +1,8 @@
 import React from "react";
 import katex from "katex";
 import { useExperimentStore } from "@/store/useExperimentStore";
+import { formatNiceNumber } from "@/utils/formatNumber";
+
 import type {
   BasisStateSummary,
   TheorySnapshot,
@@ -66,8 +68,13 @@ function KatexBlock({ math }: { math: string }) {
 }
 
 function formatReal(value: number): string {
-  const clean = Math.abs(value) < 1e-10 ? 0 : value;
-  return Number(clean.toFixed(3)).toString();
+    const mode = useExperimentStore.getState().numericDisplayMode;
+
+    return formatNiceNumber(value, {
+        mode,
+        latex: true,
+        decimalPlaces: 3,
+    });
 }
 
 function formatComplexLatex(re = 0, im = 0): string {
