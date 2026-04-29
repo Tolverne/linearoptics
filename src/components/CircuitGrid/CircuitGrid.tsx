@@ -123,10 +123,64 @@ function createComponent(
   return null;
 }
 
+
+function InputWavepacket({
+    photonCount,
+    rail,
+    overlap,
+}: {
+    photonCount: number;
+    rail: number;
+    overlap: number;
+}) {
+    const amplitude = Math.min(1, photonCount / 3);
+    const delayOffset = photonCount > 0 ? (1 - overlap) * (rail - 1.5) * 8 : 0;
+
+    return (
+        <svg
+            width="48"
+            height="28"
+            viewBox="0 0 48 28"
+            style={{
+                marginLeft: 8,
+                overflow: "visible",
+                opacity: photonCount > 0 ? 1 : 0.25,
+            }}
+        >
+            <path
+                d="M 2 14 C 8 14, 8 14, 14 14 C 18 14, 18 6, 24 6 C 30 6, 30 22, 36 22 C 40 22, 40 14, 46 14"
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth={1.5 + amplitude * 2.5}
+                strokeLinecap="round"
+                transform={`translate(${delayOffset}, 0) scale(1, ${0.65 + amplitude})`}
+                style={{
+                    transformOrigin: "24px 14px",
+                    transition: "transform 180ms ease, stroke-width 180ms ease",
+                }}
+            />
+
+            {photonCount > 1 && (
+                <text
+                    x="42"
+                    y="10"
+                    fontSize="10"
+                    fontWeight="800"
+                    fill="#1d4ed8"
+                    textAnchor="middle"
+                >
+                    ×{photonCount}
+                </text>
+            )}
+        </svg>
+    );
+}
+
 const CircuitGrid: React.FC = () => {
   const railCount = useExperimentStore((state) => state.railCount);
   const inputState = useExperimentStore((state) => state.inputState);
   const components = useExperimentStore((state) => state.components);
+  const overlap = useExperimentStore((state) => state.overlap);
   const selectedComponentId = useExperimentStore(
     (state) => state.selectedComponentId
   );
@@ -257,6 +311,34 @@ const CircuitGrid: React.FC = () => {
           marginBottom: 2,
         }}
       >
+
+              <div style={{ marginBottom: 14 }}>
+                  <div
+                      style={{
+                          fontSize: 16,
+                          fontWeight: 800,
+                          color: "#0f172a",
+                          marginBottom: 6,
+                      }}
+                  >
+                      Circuit grid
+                  </div>
+
+                  <div
+                      style={{
+                          fontSize: 13,
+                          color: "#475569",
+                          lineHeight: 1.5,
+                          maxWidth: 900,
+                      }}
+                  >
+                      Each horizontal rail represents an optical fibre or waveguide. The input
+                      boxes on the left set how many photons are injected into each rail. Optical
+                      components placed on the grid act on the photons as they travel from left to
+                      right through the circuit.
+                  </div>
+              </div>
+
         <div
           style={{
             width: 140,
@@ -333,26 +415,42 @@ const CircuitGrid: React.FC = () => {
                 boxSizing: "border-box",
               }}
             >
-              <input
-                type="number"
-                min={0}
-                step={1}
-                value={inputState[rail] ?? 0}
-                onChange={(event) =>
-                  setInputPhoton(rail, Math.max(0, Number(event.target.value)))
-                }
-                style={{
-                  width: 64,
-                  padding: "8px 10px",
-                  borderRadius: 10,
-                  border: "1px solid #cbd5e1",
-                  background: "#ffffff",
-                  fontSize: 14,
-                  textAlign: "center",
-                  color: "#0f172a",
-                  fontWeight: 600,
-                }}
-              />
+                  <div
+                      style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                      }}
+                  >
+                      <input
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={inputState[rail] ?? 0}
+                          onChange={(event) =>
+                              setInputPhoton(rail, Math.max(0, Number(event.target.value)))
+                          }
+                          style={{
+                              width: 64,
+                              padding: "8px 10px",
+                              borderRadius: 10,
+                              border: "1px solid #cbd5e1",
+                              background: "#ffffff",
+                              fontSize: 14,
+                              textAlign: "center",
+                              color: "#0f172a",
+                              fontWeight: 600,
+                          }}
+                      />
+
+                      <InputWavepacket
+                          photonCount={inputState[rail] ?? 0}
+                          rail={rail}
+                          overlap={overlap}
+                      />
+                  </div>
+
+
             </div>
           ))}
         </div>
