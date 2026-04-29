@@ -44,6 +44,7 @@ type ExperimentStore = {
   setOverlapSweep: (patch: Partial<OverlapSweepOptions>) => void;
   toggleSweepOccupation: (occupation: Occupation) => void;
   clearSweepOccupations: () => void;
+  setSweepOccupations: (occupations: Occupation[]) => void;
 
   addComponent: (component: CircuitComponent) => void;
   updateComponent: (id: string, patch: Partial<CircuitComponent>) => void;
@@ -261,7 +262,10 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
         error: null,
       };
     }),
-
+    setSweepOccupations: (occupations: Occupation[]) =>
+        set({
+            selectedSweepOccupations: occupations,
+        }),
   toggleSweepOccupation: (occupation: Occupation) =>
     set((state) => {
       const exists = state.selectedSweepOccupations.some((current) =>

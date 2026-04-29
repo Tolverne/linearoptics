@@ -116,9 +116,7 @@ function renderBeamSplitterEditor(
   return (
     <>
       <div style={{ marginBottom: 14 }}>
-        <label htmlFor="bs-theta" style={labelStyle}>
-          θ parameter
-        </label>
+
               <div style={{ marginBottom: 14 }}>
                   <label htmlFor="bs-theta" style={labelStyle}>
                       θ parameter
