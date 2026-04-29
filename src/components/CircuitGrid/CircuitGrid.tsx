@@ -292,95 +292,95 @@ const CircuitGrid: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        border: "1px solid #cbd5e1",
-        borderRadius: 16,
-        background: "#ffffff",
-        padding: 16,
-        overflowX: "auto",
-        boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-      }}
-    >
       <div
-        style={{
-          display: "flex",
-          alignItems: "flex-end",
-          gap: 12,
-          minWidth: 140 + gridWidth,
-          marginBottom: 2,
-        }}
+          style={{
+              border: "1px solid #cbd5e1",
+              borderRadius: 16,
+              background: "#ffffff",
+              padding: 16,
+              overflowX: "auto",
+              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
+          }}
       >
-
-              <div style={{ marginBottom: 14 }}>
-                  <div
-                      style={{
-                          fontSize: 16,
-                          fontWeight: 800,
-                          color: "#0f172a",
-                          marginBottom: 6,
-                      }}
-                  >
-                      Circuit grid
-                  </div>
-
-                  <div
-                      style={{
-                          fontSize: 13,
-                          color: "#475569",
-                          lineHeight: 1.5,
-                          maxWidth: 900,
-                      }}
-                  >
-                      Each horizontal rail represents an optical fibre or waveguide. The input
-                      boxes on the left set how many photons are injected into each rail. Optical
-                      components placed on the grid act on the photons as they travel from left to
-                      right through the circuit.
-                  </div>
-              </div>
+          <div style={{ marginBottom: 14 }}>
               <div
                   style={{
-                      height: 1,
-                      background: "#e2e8f0",
-                      margin: "12px 0 14px 0",
+                      fontSize: 16,
+                      fontWeight: 800,
+                      color: "#0f172a",
+                      marginBottom: 6,
                   }}
-              />
+              >
+                  Circuit grid
+              </div>
 
-        <div
-          style={{
-            width: 140,
-            flexShrink: 0,
-          }}
-        >
-          <label
-            htmlFor="rail-count-inline"
-            style={{
-              display: "block",
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#475569",
-              marginBottom: 6,
-              textTransform: "uppercase",
-              letterSpacing: 0.4,
-            }}
+              <div
+                  style={{
+                      fontSize: 13,
+                      color: "#475569",
+                      lineHeight: 1.5,
+                      maxWidth: 900,
+                  }}
+              >
+                  Each horizontal rail represents an optical fibre or waveguide. The input
+                  boxes on the left set how many photons are injected into each rail. Optical
+                  components placed on the grid act on the photons as they travel from left to
+                  right through the circuit.
+              </div>
+          </div>
+
+          <div
+              style={{
+                  borderTop: "1px solid #e2e8f0",
+                  margin: "12px 0 14px 0",
+              }}
+          />
+
+          <div
+              style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: 12,
+                  minWidth: 140 + gridWidth,
+                  marginBottom: 2,
+              }}
           >
-            Rails
-          </label>
-          <select
-            id="rail-count-inline"
-            value={railCount}
-            onChange={(event) => setRailCount(Number(event.target.value))}
-            style={{
-              width: "100%",
-              padding: "8px 10px",
-              borderRadius: 10,
-              border: "1px solid #cbd5e1",
-              background: "#ffffff",
-              fontSize: 14,
-              color: "#0f172a",
-              fontWeight: 600,
-            }}
-          >
+              <div
+                  style={{
+                      width: 140,
+                      flexShrink: 0,
+                  }}
+              >
+                  <label
+                      htmlFor="rail-count-inline"
+                      style={{
+                          display: "block",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#475569",
+                          marginBottom: 6,
+                          textTransform: "uppercase",
+                          letterSpacing: 0.4,
+                      }}
+                  >
+                      Rails
+                  </label>
+
+                  <select
+                      id="rail-count-inline"
+                      value={railCount}
+                      onChange={(event) => setRailCount(Number(event.target.value))}
+                      style={{
+                          width: "100%",
+                          padding: "8px 10px",
+                          borderRadius: 10,
+                          border: "1px solid #cbd5e1",
+                          background: "#ffffff",
+                          fontSize: 14,
+                          color: "#0f172a",
+                          fontWeight: 600,
+                      }}
+                  >
             {Array.from(
               { length: MAX_RAILS - MIN_RAILS + 1 },
               (_, i) => MIN_RAILS + i
