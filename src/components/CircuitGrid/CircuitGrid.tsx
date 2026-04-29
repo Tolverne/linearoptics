@@ -338,6 +338,13 @@ const CircuitGrid: React.FC = () => {
                       right through the circuit.
                   </div>
               </div>
+              <div
+                  style={{
+                      height: 1,
+                      background: "#e2e8f0",
+                      margin: "12px 0 14px 0",
+                  }}
+              />
 
         <div
           style={{

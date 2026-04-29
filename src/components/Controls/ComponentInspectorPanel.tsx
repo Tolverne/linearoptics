@@ -1,11 +1,70 @@
 import React from "react";
 import { useExperimentStore } from "@/store/useExperimentStore";
+import { formatNiceNumber } from "@/utils/formatNumber";
 import type {
   BeamSplitterComponent,
   CircuitComponent,
   PhaseShifterComponent,
   SwapComponent,
 } from "@/types/simulation";
+
+
+const BASE_DENOMINATORS = [6, 4, 3, 2]; // π/6, π/4, π/3, π/2
+
+function gcd(a: number, b: number): number {
+    return b === 0 ? a : gcd(b, a % b);
+}
+
+function formatPiLabel(n: number, d: number): string {
+    if (n === 0) return "0";
+    if (n === d) return "π";
+    if (n === 2 * d) return "2π";
+
+    const divisor = gcd(n, d);
+    const num = n / divisor;
+    const den = d / divisor;
+
+    if (num === 1) return `π/${den}`;
+    return `${num}π/${den}`;
+}
+
+function generateAnglePresets() {
+    const map = new Map<number, { label: string; value: number }>();
+
+    // Always include key anchors
+    map.set(0, { label: "0", value: 0 });
+    map.set(Math.PI, { label: "π", value: Math.PI });
+    map.set(2 * Math.PI, { label: "2π", value: 2 * Math.PI });
+
+    for (const d of BASE_DENOMINATORS) {
+        for (let n = 1; n <= 2 * d; n++) {
+            const value = (n * Math.PI) / d;
+
+            // round key for floating stability
+            const key = Number(value.toFixed(6));
+
+            if (!map.has(key)) {
+                map.set(key, {
+                    label: formatPiLabel(n, d),
+                    value,
+                });
+            }
+        }
+    }
+
+    // Sort ascending
+    return Array.from(map.values()).sort((a, b) => a.value - b.value);
+}
+
+const ANGLE_PRESETS = generateAnglePresets();
+
+function findPresetAngle(value: number): string {
+    const match = ANGLE_PRESETS.find(
+        (preset) => Math.abs(preset.value - value) < 1e-5
+    );
+
+    return match ? String(match.value) : "custom";
+}
 
 function getSelectedComponent(
   components: CircuitComponent[],
@@ -60,21 +119,37 @@ function renderBeamSplitterEditor(
         <label htmlFor="bs-theta" style={labelStyle}>
           θ parameter
         </label>
-        <input
-          id="bs-theta"
-          type="number"
-          step={0.01}
-          value={component.params.theta}
-          onChange={(event) =>
-            updateComponent(component.id, {
-              ...component,
-              params: {
-                theta: Number(event.target.value),
-              },
-            })
-          }
-          style={inputStyle}
-        />
+              <div style={{ marginBottom: 14 }}>
+                  <label htmlFor="bs-theta" style={labelStyle}>
+                      θ parameter
+                  </label>
+
+                  <select
+                      id="bs-theta"
+                      value={findPresetAngle(component.params.theta)}
+                      onChange={(event) => {
+                          if (event.target.value === "custom") return;
+
+                          updateComponent(component.id, {
+                              ...component,
+                              params: {
+                                  theta: Number(event.target.value),
+                              },
+                          });
+                      }}
+                      style={inputStyle}
+                  >
+                      {ANGLE_PRESETS.map((preset) => (
+                          <option key={preset.label} value={preset.value}>
+                              {preset.label} ({preset.value.toFixed(3)})
+                          </option>
+                      ))}
+
+                      <option value="custom">
+                          Custom ({formatNiceNumber(component.params.theta, { mode: "both" })})
+                      </option>
+                  </select>
+              </div>
       </div>
 
       <div style={infoBoxStyle}>
@@ -96,21 +171,37 @@ function renderPhaseShifterEditor(
         <label htmlFor="ps-phi" style={labelStyle}>
           φ parameter
         </label>
-        <input
-          id="ps-phi"
-          type="number"
-          step={0.01}
-          value={component.params.phi}
-          onChange={(event) =>
-            updateComponent(component.id, {
-              ...component,
-              params: {
-                phi: Number(event.target.value),
-              },
-            })
-          }
-          style={inputStyle}
-        />
+              <div style={{ marginBottom: 14 }}>
+                  <label htmlFor="ps-phi" style={labelStyle}>
+                      φ parameter
+                  </label>
+
+                  <select
+                      id="ps-phi"
+                      value={findPresetAngle(component.params.phi)}
+                      onChange={(event) => {
+                          if (event.target.value === "custom") return;
+
+                          updateComponent(component.id, {
+                              ...component,
+                              params: {
+                                  phi: Number(event.target.value),
+                              },
+                          });
+                      }}
+                      style={inputStyle}
+                  >
+                      {ANGLE_PRESETS.map((preset) => (
+                          <option key={preset.label} value={preset.value}>
+                              {preset.label} ({preset.value.toFixed(3)})
+                          </option>
+                      ))}
+
+                      <option value="custom">
+                          Custom ({formatNiceNumber(component.params.phi, { mode: "both" })})
+                      </option>
+                  </select>
+              </div>
       </div>
 
       <div style={infoBoxStyle}>
