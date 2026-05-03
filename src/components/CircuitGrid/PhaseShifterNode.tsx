@@ -11,7 +11,8 @@ type PhaseShifterNodeProps = {
   rowHeight?: number;
   columnWidth?: number;
   isSelected?: boolean;
-  onSelect?: () => void;
+    onSelect?: () => void;
+    onDragStart?: (event: React.DragEvent<HTMLButtonElement>) => void;
 };
 
 
@@ -21,7 +22,8 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
   rowHeight = 72,
   columnWidth = 96,
   isSelected = false,
-  onSelect,
+    onSelect,
+    onDragStart,
 }) => {
     const mode = useExperimentStore((state) => state.numericDisplayMode);
     const phiLabel = formatNiceNumber(component.params.phi, {
@@ -31,7 +33,10 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
   return (
     <button
       type="button"
-      onClick={onSelect}
+          onClick={onSelect}
+          onMouseDown={onSelect}
+          draggable
+          onDragStart={onDragStart}
           title={`Phase Shifter (φ = ${phiLabel})`}
       style={{
         position: "absolute",

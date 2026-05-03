@@ -9,7 +9,8 @@ type BeamSplitterNodeProps = {
   rowHeight?: number;
   columnWidth?: number;
   isSelected?: boolean;
-  onSelect?: () => void;
+    onSelect?: () => void;
+    onDragStart?: (event: React.DragEvent<HTMLButtonElement>) => void;
 };
 
 const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
@@ -18,6 +19,7 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
   columnWidth = 96,
   isSelected = false,
   onSelect,
+  onDragStart,
 }) => {
   const topRail = Math.min(component.rails[0], component.rails[1]);
 
@@ -47,7 +49,10 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
   return (
     <button
       type="button"
-      onClick={onSelect}
+          onClick={onSelect}
+          onMouseDown={onSelect}
+          draggable
+          onDragStart={onDragStart}
           title={`Beam Splitter (θ = ${formatNiceNumber(component.params.theta, {
               mode,
               decimalPlaces: 3,

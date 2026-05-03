@@ -6,7 +6,8 @@ type SwapNodeProps = {
   rowHeight?: number;
   columnWidth?: number;
   isSelected?: boolean;
-  onSelect?: () => void;
+    onSelect?: () => void;
+    onDragStart?: (event: React.DragEvent<HTMLButtonElement>) => void;
 };
 
 const SwapNode: React.FC<SwapNodeProps> = ({
@@ -14,7 +15,8 @@ const SwapNode: React.FC<SwapNodeProps> = ({
   rowHeight = 72,
   columnWidth = 96,
   isSelected = false,
-  onSelect,
+    onSelect,
+    onDragStart,
 }) => {
   const topRail = Math.min(component.rails[0], component.rails[1]);
   const bottomRail = Math.max(component.rails[0], component.rails[1]);
@@ -36,7 +38,10 @@ const SwapNode: React.FC<SwapNodeProps> = ({
   return (
     <button
       type="button"
-      onClick={onSelect}
+          onClick={onSelect}
+          onMouseDown={onSelect}
+          draggable
+          onDragStart={onDragStart}
       title={`Swap (${component.rails[0] + 1} ↔ ${component.rails[1] + 1})`}
       style={{
         position: "absolute",

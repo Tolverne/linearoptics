@@ -24,6 +24,74 @@ const GRID_BACKGROUND = "#f8fafc";
 const MIN_RAILS = 2;
 const MAX_RAILS = 6;
 
+
+type DraggedExistingComponentPayload = {
+    kind: "existing_component";
+    componentId: string;
+};
+
+function parseDraggedExistingComponent(
+    event: React.DragEvent
+): DraggedExistingComponentPayload | null {
+    const rawJson = event.dataTransfer.getData("application/json");
+
+    if (!rawJson) return null;
+
+    try {
+        const parsed = JSON.parse(rawJson) as Partial<DraggedExistingComponentPayload>;
+
+        if (
+            parsed.kind === "existing_component" &&
+            typeof parsed.componentId === "string"
+        ) {
+            return {
+                kind: "existing_component",
+                componentId: parsed.componentId,
+            };
+        }
+    } catch {
+        return null;
+    }
+
+    return null;
+}
+
+function moveComponentToCell(
+    component: CircuitComponent,
+    rail: number,
+    column: number,
+    railCount: number
+): Partial<CircuitComponent> | null {
+    if (component.type === "phase_shifter") {
+        return {
+            column,
+            rail,
+        } as Partial<PhaseShifterComponent>;
+    }
+
+    if (component.type === "beam_splitter") {
+        const anchorRail = Math.min(rail, railCount - 2);
+        if (anchorRail < 0 || anchorRail >= railCount - 1) return null;
+
+        return {
+            column,
+            rails: [anchorRail, anchorRail + 1],
+        } as Partial<BeamSplitterComponent>;
+    }
+
+    if (component.type === "swap") {
+        const anchorRail = Math.min(rail, railCount - 2);
+        if (anchorRail < 0 || anchorRail >= railCount - 1) return null;
+
+        return {
+            column,
+            rails: [anchorRail, anchorRail + 1],
+        } as Partial<SwapComponent>;
+    }
+
+    return null;
+}
+
 function makeId(prefix: string): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;
@@ -187,6 +255,7 @@ const CircuitGrid: React.FC = () => {
   const selectedStep = useExperimentStore((state) => state.selectedStep);
 
   const addComponent = useExperimentStore((state) => state.addComponent);
+  const updateComponent = useExperimentStore((state) => state.updateComponent);
   const setSelectedComponentId = useExperimentStore(
     (state) => state.setSelectedComponentId
   );
@@ -221,38 +290,89 @@ const CircuitGrid: React.FC = () => {
     }
     return occupied;
   }, [components]);
+  
 
-  const handleDrop = (event: React.DragEvent, rail: number, column: number) => {
-    event.preventDefault();
-    setHoverCell(null);
+    const handleDrop = (event: React.DragEvent, rail: number, column: number) => {
+        event.preventDefault();
+        setHoverCell(null);
 
-    const toolType = parseDraggedToolType(event);
-    if (!toolType) {
-      setError("Could not determine dragged component type.");
-      return;
-    }
+        const existingPayload = parseDraggedExistingComponent(event);
 
-    const component = createComponent(toolType, rail, column, railCount);
-    if (!component) {
-      setError("That component cannot be placed on this cell.");
-      return;
-    }
+        if (existingPayload) {
+            const existingComponent = components.find(
+                (component) => component.id === existingPayload.componentId
+            );
 
-    const occupiedRails = getOccupiedRails(component);
-    const hasConflict = occupiedRails.some((r) =>
-      componentConflicts.has(`${column}:${r}`)
-    );
+            if (!existingComponent) {
+                setError("Could not find the component being moved.");
+                return;
+            }
 
-    if (hasConflict) {
-      setError("That placement overlaps an existing component.");
-      return;
-    }
+            const patch = moveComponentToCell(existingComponent, rail, column, railCount);
 
-    addComponent(component);
-    setSelectedComponentId(component.id);
-    setSelectedStep(component.column);
-    setError(null);
-  };
+            if (!patch) {
+                setError("That component cannot be moved to this cell.");
+                return;
+            }
+
+            const movedComponent = {
+                ...existingComponent,
+                ...patch,
+            } as CircuitComponent;
+
+            const occupiedRails = getOccupiedRails(movedComponent);
+
+            const hasConflict = occupiedRails.some((r) =>
+                components.some((component) => {
+                    if (component.id === existingComponent.id) return false;
+                    if (component.column !== column) return false;
+
+                    return getOccupiedRails(component).includes(r);
+                })
+            );
+
+            if (hasConflict) {
+                setError("That move overlaps an existing component.");
+                return;
+            }
+
+            updateComponent(existingComponent.id, patch);
+            setSelectedComponentId(existingComponent.id);
+            setSelectedStep(column);
+            setError(null);
+            return;
+        }
+
+        const toolType = parseDraggedToolType(event);
+
+        if (!toolType) {
+            setError("Could not determine dragged component type.");
+            return;
+        }
+
+        const component = createComponent(toolType, rail, column, railCount);
+
+        if (!component) {
+            setError("That component cannot be placed on this cell.");
+            return;
+        }
+
+        const occupiedRails = getOccupiedRails(component);
+
+        const hasConflict = occupiedRails.some((r) =>
+            componentConflicts.has(`${column}:${r}`)
+        );
+
+        if (hasConflict) {
+            setError("That placement overlaps an existing component.");
+            return;
+        }
+
+        addComponent(component);
+        setSelectedComponentId(component.id);
+        setSelectedStep(component.column);
+        setError(null);
+    };
 
   const handleColumnSelect = (column: number) => {
     setSelectedStep(column);
@@ -597,6 +717,17 @@ const CircuitGrid: React.FC = () => {
                   columnWidth={COLUMN_WIDTH}
                   isSelected={isSelected}
                   onSelect={() => handleComponentSelect(component)}
+                    onDragStart={(event) => {
+                        event.dataTransfer.setData(
+                            "application/json",
+                            JSON.stringify({
+                                kind: "existing_component",
+                                componentId: component.id,
+                            })
+                        );
+
+                        event.dataTransfer.effectAllowed = "move";
+                    }}
                 />
               );
             }
@@ -609,7 +740,18 @@ const CircuitGrid: React.FC = () => {
                   rowHeight={ROW_HEIGHT}
                   columnWidth={COLUMN_WIDTH}
                   isSelected={isSelected}
-                  onSelect={() => handleComponentSelect(component)}
+                      onSelect={() => handleComponentSelect(component)}
+                      onDragStart={(event) => {
+                          event.dataTransfer.setData(
+                              "application/json",
+                              JSON.stringify({
+                                  kind: "existing_component",
+                                  componentId: component.id,
+                              })
+                          );
+
+                          event.dataTransfer.effectAllowed = "move";
+                      }}
                 />
               );
             }
@@ -621,7 +763,18 @@ const CircuitGrid: React.FC = () => {
                 rowHeight={ROW_HEIGHT}
                 columnWidth={COLUMN_WIDTH}
                 isSelected={isSelected}
-                onSelect={() => handleComponentSelect(component)}
+                    onSelect={() => handleComponentSelect(component)}
+                    onDragStart={(event) => {
+                        event.dataTransfer.setData(
+                            "application/json",
+                            JSON.stringify({
+                                kind: "existing_component",
+                                componentId: component.id,
+                            })
+                        );
+
+                        event.dataTransfer.effectAllowed = "move";
+                    }}
               />
             );
           })}
