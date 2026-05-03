@@ -269,7 +269,7 @@ const PhotonOverlapSweepPanel: React.FC = () => {
       ) : (
                   <>
 
-                      <div className="export-target">
+                     
 
 
           <div
@@ -279,7 +279,8 @@ const PhotonOverlapSweepPanel: React.FC = () => {
               borderRadius: 12,
               background: "#f8fafc",
             }}
-          >
+                      >
+                          <div className="export-target">
             <svg
               width={CHART_WIDTH}
               height={CHART_HEIGHT}
@@ -431,7 +432,13 @@ const PhotonOverlapSweepPanel: React.FC = () => {
                   </g>
                 );
               })}
-            </svg>
+                              </svg>
+                          </div>
+
+
+
+
+
           </div>
 
           <div
@@ -479,7 +486,9 @@ const PhotonOverlapSweepPanel: React.FC = () => {
             })}
 
 
-                          </div>
+                        
+
+                      
 
 
             <button
