@@ -16,6 +16,12 @@ const LabBenchPage: React.FC = () => {
     const components = useExperimentStore((state) => state.components);
     const overlap = useExperimentStore((state) => state.overlap);
     const results = useExperimentStore((state) => state.results);
+    const selectedStep = useExperimentStore((state) => state.selectedStep);
+    const inspectorMode = useExperimentStore((state) => state.inspectorMode);
+    const overlapSweep = useExperimentStore((state) => state.overlapSweep);
+    const selectedSweepOccupations = useExperimentStore(
+        (state) => state.selectedSweepOccupations
+    );
   return (
     <div
       style={{
@@ -75,16 +81,41 @@ const LabBenchPage: React.FC = () => {
                       >
                           <CircuitGrid />
                       </ExportablePanel>
+
                       <ExportablePanel
                           title="Output Distribution"
                           imageFilename="output-distribution.png"
                           dataFilename="output-distribution.json"
                           dataFormat="json"
-                          data={results?.intermediateStates ?? []}
+                          data={{
+                              selectedStep,
+                              overlap,
+                              inspectorMode,
+                              exactIntermediateStates: results?.intermediateStates ?? [],
+                              sampledIntermediateStates: results?.sampledIntermediateStates ?? [],
+                              overlapSweep: results?.overlapSweep ?? null,
+                              sampledOverlapSweep: results?.sampledOverlapSweep ?? null,
+                          }}
                       >
                           <OutputDistributionChart />
                       </ExportablePanel>
-            <PhotonOverlapSweepPanel />
+
+                      <ExportablePanel
+                          title="Photon Overlap Sweep"
+                          imageFilename="photon-overlap-sweep.png"
+                          dataFilename="photon-overlap-sweep.json"
+                          dataFormat="json"
+                          data={{
+                              selectedStep,
+                              selectedSweepOccupations,
+                              overlapSweepOptions: overlapSweep,
+                              theorySweep: results?.overlapSweep ?? null,
+                              sampledSweep: results?.sampledOverlapSweep ?? null,
+                          }}
+                      >
+                          <PhotonOverlapSweepPanel />
+                      </ExportablePanel>
+
                       <ExportablePanel
                           title="Theory Panel"
                           imageFilename="theory-panel.png"
@@ -94,7 +125,21 @@ const LabBenchPage: React.FC = () => {
                       >
                           <TheoryPanel />
                       </ExportablePanel>
-            <OutputTablePanel />
+
+                      <ExportablePanel
+                          title="Output Table"
+                          imageFilename="output-table.png"
+                          dataFilename="output-table.json"
+                          dataFormat="json"
+                          data={{
+                              results,
+                              selectedStep,
+                              overlap,
+                              inspectorMode,
+                          }}
+                      >
+                          <OutputTablePanel />
+                      </ExportablePanel>
           </div>
         </div>
       </div>
