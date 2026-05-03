@@ -7,8 +7,15 @@ import OutputDistributionChart from "@/components/Results/OutputDistributionChar
 import PhotonOverlapSweepPanel from "@/components/Results/PhotonOverlapSweepPanel";
 import TheoryPanel from "@/components/Results/TheoryPanel";
 import OutputTablePanel from "@/components/Results/OutputTablePanel";
+import { useExperimentStore } from "@/store/useExperimentStore";
+import { ExportablePanel } from "@/components/Export/ExportablePanel";
 
 const LabBenchPage: React.FC = () => {
+    const railCount = useExperimentStore((state) => state.railCount);
+    const inputState = useExperimentStore((state) => state.inputState);
+    const components = useExperimentStore((state) => state.components);
+    const overlap = useExperimentStore((state) => state.overlap);
+    const results = useExperimentStore((state) => state.results);
   return (
     <div
       style={{
@@ -54,10 +61,39 @@ const LabBenchPage: React.FC = () => {
               alignSelf: "start",
             }}
           >
-            <CircuitGrid />
-            <OutputDistributionChart />
+                      <ExportablePanel
+                          title="Circuit Grid"
+                          imageFilename="circuit-grid.png"
+                          dataFilename="circuit.json"
+                          dataFormat="json"
+                          data={{
+                              railCount,
+                              inputState,
+                              components,
+                              overlap,
+                          }}
+                      >
+                          <CircuitGrid />
+                      </ExportablePanel>
+                      <ExportablePanel
+                          title="Output Distribution"
+                          imageFilename="output-distribution.png"
+                          dataFilename="output-distribution.json"
+                          dataFormat="json"
+                          data={results?.intermediateStates ?? []}
+                      >
+                          <OutputDistributionChart />
+                      </ExportablePanel>
             <PhotonOverlapSweepPanel />
-            <TheoryPanel />
+                      <ExportablePanel
+                          title="Theory Panel"
+                          imageFilename="theory-panel.png"
+                          dataFilename="theory.json"
+                          dataFormat="json"
+                          data={results?.theory ?? null}
+                      >
+                          <TheoryPanel />
+                      </ExportablePanel>
             <OutputTablePanel />
           </div>
         </div>
