@@ -267,7 +267,11 @@ const PhotonOverlapSweepPanel: React.FC = () => {
           selecting another output state from the distribution chart.
         </EmptyMessage>
       ) : (
-        <>
+                  <>
+
+                      <div className="export-target">
+
+
           <div
             style={{
               overflowX: "auto",
@@ -473,6 +477,10 @@ const PhotonOverlapSweepPanel: React.FC = () => {
                 </div>
               );
             })}
+
+
+                          </div>
+
 
             <button
               type="button"

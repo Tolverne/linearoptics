@@ -1,5 +1,3 @@
-// src/components/export/ExportablePanel.tsx
-
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 
@@ -11,6 +9,7 @@ interface ExportablePanelProps {
     dataFilename: string;
     data: unknown;
     dataFormat: DataFormat;
+    exportSelector?: string;
     children: React.ReactNode;
 }
 
@@ -20,6 +19,7 @@ export function ExportablePanel({
     dataFilename,
     data,
     dataFormat,
+    exportSelector = ".export-target",
     children,
 }: ExportablePanelProps) {
     const ref = useRef<HTMLDivElement>(null);
@@ -30,10 +30,23 @@ export function ExportablePanel({
             ? JSON.stringify(data, null, 2)
             : String(data ?? "");
 
-    async function downloadImage() {
-        if (!ref.current) return;
+    function getExportTarget(): HTMLElement | null {
+        if (!ref.current) return null;
 
-        const dataUrl = await toPng(ref.current, {
+        const selected = ref.current.querySelector(exportSelector);
+
+        if (selected instanceof HTMLElement) {
+            return selected;
+        }
+
+        return ref.current;
+    }
+
+    async function downloadImage() {
+        const target = getExportTarget();
+        if (!target) return;
+
+        const dataUrl = await toPng(target, {
             cacheBust: true,
             pixelRatio: 2,
             backgroundColor: "#ffffff",
@@ -69,40 +82,111 @@ export function ExportablePanel({
     }
 
     return (
-        <div className="relative rounded-xl border bg-white p-4 shadow-sm">
+        <div
+            ref={ref}
+            style={{
+                position: "relative",
+            }}
+        >
             <button
-                className="absolute right-3 top-3 rounded-md border bg-white px-2 py-1 text-sm shadow-sm hover:bg-gray-50"
+                type="button"
                 onClick={() => setOpen(true)}
                 title={`Export ${title}`}
+                style={{
+                    position: "absolute",
+                    right: 12,
+                    top: 12,
+                    zIndex: 20,
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    borderRadius: 10,
+                    padding: "6px 10px",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: "#334155",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 6px rgba(15, 23, 42, 0.08)",
+                }}
             >
                 Export
             </button>
 
-            <div ref={ref} className="bg-white p-2">
-                {children}
-            </div>
+            {children}
 
             {open && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                    <div className="w-full max-w-3xl rounded-xl bg-white p-5 shadow-xl">
-                        <div className="mb-3 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold">Export {title}</h2>
-                            <button onClick={() => setOpen(false)}>✕</button>
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 1000,
+                        background: "rgba(15, 23, 42, 0.45)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 24,
+                    }}
+                >
+                    <div
+                        style={{
+                            width: "min(900px, 100%)",
+                            maxHeight: "85vh",
+                            overflow: "auto",
+                            background: "#ffffff",
+                            borderRadius: 16,
+                            padding: 20,
+                            boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: 14,
+                            }}
+                        >
+                            <h2 style={{ margin: 0, fontSize: 18 }}>Export {title}</h2>
+
+                            <button
+                                type="button"
+                                onClick={() => setOpen(false)}
+                                style={{
+                                    border: "none",
+                                    background: "transparent",
+                                    fontSize: 22,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                ×
+                            </button>
                         </div>
 
-                        <div className="mb-4 flex gap-2">
-                            <button onClick={downloadImage} className="rounded-md border px-3 py-2">
+                        <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+                            <button type="button" onClick={downloadImage}>
                                 Download PNG
                             </button>
-                            <button onClick={downloadData} className="rounded-md border px-3 py-2">
+
+                            <button type="button" onClick={downloadData}>
                                 Download Data
                             </button>
-                            <button onClick={copyData} className="rounded-md border px-3 py-2">
+
+                            <button type="button" onClick={copyData}>
                                 Copy Data
                             </button>
                         </div>
 
-                        <pre className="max-h-[50vh] overflow-auto rounded-md bg-gray-100 p-3 text-sm">
+                        <pre
+                            style={{
+                                whiteSpace: "pre-wrap",
+                                maxHeight: "50vh",
+                                overflow: "auto",
+                                background: "#f8fafc",
+                                border: "1px solid #e2e8f0",
+                                borderRadius: 12,
+                                padding: 12,
+                                fontSize: 12,
+                            }}
+                        >
                             {raw}
                         </pre>
                     </div>

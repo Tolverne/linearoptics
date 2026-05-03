@@ -329,13 +329,14 @@ const CircuitGrid: React.FC = () => {
               </div>
           </div>
 
+
           <div
               style={{
                   borderTop: "1px solid #e2e8f0",
                   margin: "12px 0 14px 0",
               }}
           />
-
+          <div className="export-target">
           <div
               style={{
                   display: "flex",
@@ -625,6 +626,7 @@ const CircuitGrid: React.FC = () => {
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );

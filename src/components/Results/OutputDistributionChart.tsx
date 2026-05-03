@@ -420,6 +420,12 @@ const OutputDistributionChart: React.FC = () => {
                 </button>
             </div>
 
+
+
+
+
+            <div className="export-target">
+
             <div
                 style={{
                     overflowX: "auto",
@@ -520,6 +526,12 @@ const OutputDistributionChart: React.FC = () => {
                 </div>
             </div>
 
+            </div>
+
+
+
+
+
             <div
                 style={{
                     marginTop: 14,
@@ -529,6 +541,10 @@ const OutputDistributionChart: React.FC = () => {
                     background: "#f8fafc",
                 }}
             >
+
+
+
+
                 <label
                     htmlFor="output-selected-overlap"
                     style={{

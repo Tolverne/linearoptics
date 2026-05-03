@@ -344,6 +344,11 @@ const TheoryPanel: React.FC = () => {
         Cumulative action up to {selectedSnapshot.label}
       </div>
 
+
+          <div className="export-target">
+
+
+
       <div
         style={{
           display: "grid",
@@ -383,6 +388,12 @@ const TheoryPanel: React.FC = () => {
           <KatexBlock math={cumulativeOutputLatex} />
         </div>
       </div>
+
+
+
+          </div>
+
+
 
       <div style={subheadingStyle}>
         Action of {selectedSnapshot.label} only

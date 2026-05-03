@@ -126,20 +126,7 @@ const LabBenchPage: React.FC = () => {
                           <TheoryPanel />
                       </ExportablePanel>
 
-                      <ExportablePanel
-                          title="Output Table"
-                          imageFilename="output-table.png"
-                          dataFilename="output-table.json"
-                          dataFormat="json"
-                          data={{
-                              results,
-                              selectedStep,
-                              overlap,
-                              inspectorMode,
-                          }}
-                      >
-                          <OutputTablePanel />
-                      </ExportablePanel>
+                      <OutputTablePanel />
           </div>
         </div>
       </div>
