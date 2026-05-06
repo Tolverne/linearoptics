@@ -40,7 +40,12 @@ function KatexBlock({ math }: { math: string }) {
         output: "htmlAndMathml",
     });
 
-    return <div style={{ overflowX: "auto" }} dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+        <div
+            style={{ overflowX: "auto" }}
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
+    );
 }
 
 function clean(x: number) {
@@ -49,10 +54,11 @@ function clean(x: number) {
 
 function formatReal(x: number) {
     const mode = useExperimentStore.getState().numericDisplayMode;
+
     return formatNiceNumber(clean(x), {
         mode,
         latex: true,
-        decimalPlaces: 3,
+        decimalPlaces: 4,
     });
 }
 
@@ -82,6 +88,18 @@ function mul(a: Complex, b: Complex): Complex {
     };
 }
 
+function conjugate(a: Complex): Complex {
+    return { re: a.re, im: -a.im };
+}
+
+function scale(a: Complex, k: number): Complex {
+    return { re: a.re * k, im: a.im * k };
+}
+
+function absSquared(a: Complex): number {
+    return a.re * a.re + a.im * a.im;
+}
+
 function factorial(n: number) {
     let out = 1;
     for (let k = 2; k <= n; k++) out *= k;
@@ -94,13 +112,15 @@ function fockFactorialProduct(state: number[]) {
 
 function expandFockIndices(state: number[]) {
     const indices: number[] = [];
+
     state.forEach((count, rail) => {
         for (let i = 0; i < count; i++) indices.push(rail);
     });
+
     return indices;
 }
 
-function permanent(matrix: Complex[][]): Complex {
+function permanentComplex(matrix: Complex[][]): Complex {
     const n = matrix.length;
 
     if (n === 0) return { re: 1, im: 0 };
@@ -110,7 +130,23 @@ function permanent(matrix: Complex[][]): Complex {
 
     for (let col = 0; col < n; col++) {
         const minor = matrix.slice(1).map((row) => row.filter((_, j) => j !== col));
-        total = add(total, mul(matrix[0][col], permanent(minor)));
+        total = add(total, mul(matrix[0][col], permanentComplex(minor)));
+    }
+
+    return total;
+}
+
+function permanentReal(matrix: number[][]): number {
+    const n = matrix.length;
+
+    if (n === 0) return 1;
+    if (n === 1) return matrix[0][0];
+
+    let total = 0;
+
+    for (let col = 0; col < n; col++) {
+        const minor = matrix.slice(1).map((row) => row.filter((_, j) => j !== col));
+        total += matrix[0][col] * permanentReal(minor);
     }
 
     return total;
@@ -125,6 +161,19 @@ function complexMatrix(re?: number[][], im?: number[][]): Complex[][] | null {
             im: im?.[i]?.[j] ?? 0,
         }))
     );
+}
+
+function permutations(values: number[]): number[][] {
+    if (values.length <= 1) return [values];
+
+    const out: number[][] = [];
+
+    values.forEach((value, index) => {
+        const rest = values.filter((_, j) => j !== index);
+        permutations(rest).forEach((p) => out.push([value, ...p]));
+    });
+
+    return out;
 }
 
 function key(row: number, col: number) {
@@ -180,11 +229,84 @@ const headerCellStyle: React.CSSProperties = {
     color: "#334155",
 };
 
+function probabilityMatrix(submatrix: Complex[][]): number[][] {
+    return submatrix.map((row) => row.map(absSquared));
+}
+
+function permutationAmplitude(
+    submatrix: Complex[][],
+    permutation: number[]
+): Complex {
+    return permutation.reduce<Complex>(
+        (product, colIndex, rowIndex) => mul(product, submatrix[rowIndex][colIndex]),
+        { re: 1, im: 0 }
+    );
+}
+
+function mismatchCount(a: number[], b: number[]): number {
+    return a.reduce((count, value, index) => count + (value === b[index] ? 0 : 1), 0);
+}
+
+function partialDistinguishableProbability(
+    submatrix: Complex[][],
+    eta: number,
+    normalisation: number
+): {
+    probability: number;
+    weightedSum: Complex;
+    pathCount: number;
+    termCount: number;
+} {
+    const n = submatrix.length;
+    const perms = permutations(Array.from({ length: n }, (_, i) => i));
+    const amplitudes = perms.map((perm) => permutationAmplitude(submatrix, perm));
+
+    let weightedSum: Complex = { re: 0, im: 0 };
+
+    perms.forEach((sigma, i) => {
+        perms.forEach((tau, j) => {
+            const weight = eta ** mismatchCount(sigma, tau);
+            const contribution = scale(mul(amplitudes[i], conjugate(amplitudes[j])), weight);
+            weightedSum = add(weightedSum, contribution);
+        });
+    });
+
+    return {
+        probability: clean(weightedSum.re / normalisation),
+        weightedSum,
+        pathCount: perms.length,
+        termCount: perms.length * perms.length,
+    };
+}
+
+function Section({
+    title,
+    children,
+    description,
+}: {
+    title: string;
+    description?: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div style={cardStyle}>
+            <strong>{title}</strong>
+            {description && (
+                <p style={{ margin: "8px 0 12px", fontSize: 13, color: "#475569", lineHeight: 1.5 }}>
+                    {description}
+                </p>
+            )}
+            {children}
+        </div>
+    );
+}
+
 export default function PermanentExplorerPanel() {
     const inputState = useExperimentStore((s) => s.inputState);
     const railCount = useExperimentStore((s) => s.railCount);
     const results = useExperimentStore((s) => s.results);
     const selectedStep = useExperimentStore((s) => s.selectedStep);
+    const overlap = useExperimentStore((s) => s.overlap);
 
     const [outputState, setOutputState] = useState<number[]>(inputState);
 
@@ -193,6 +315,7 @@ export default function PermanentExplorerPanel() {
     }, [inputState, railCount]);
 
     const snapshots = results?.theory?.snapshots ?? [];
+
     const selectedSnapshot =
         snapshots.find((snapshot) => snapshot.column === selectedStep) ??
         snapshots[snapshots.length - 1];
@@ -211,8 +334,7 @@ export default function PermanentExplorerPanel() {
             <div style={panelStyle}>
                 <h3 style={{ marginTop: 0 }}>Permanent Explorer</h3>
                 <div style={cardStyle}>
-                    Run a simulation to generate the cumulative unitary. The permanent explorer
-                    will then show how a chosen output state creates the repeated submatrix.
+                    Run a simulation to generate the cumulative unitary.
                 </div>
             </div>
         );
@@ -226,10 +348,13 @@ export default function PermanentExplorerPanel() {
     );
 
     const highlight = new Map<string, string>();
+
     outputRails.forEach((r) => {
         inputRails.forEach((c) => {
             const k = key(r, c);
-            if (!highlight.has(k)) highlight.set(k, colours[highlight.size % colours.length]);
+            if (!highlight.has(k)) {
+                highlight.set(k, colours[highlight.size % colours.length]);
+            }
         });
     });
 
@@ -237,22 +362,33 @@ export default function PermanentExplorerPanel() {
     const outputCount = outputState.reduce((a, b) => a + b, 0);
     const valid = photonCount === outputCount;
 
-    const per = valid ? permanent(submatrix) : { re: 0, im: 0 };
-    const norm = Math.sqrt(
-        fockFactorialProduct(inputState) * fockFactorialProduct(outputState)
-    );
-    const amplitude = valid ? { re: per.re / norm, im: per.im / norm } : { re: 0, im: 0 };
-    const probability = amplitude.re ** 2 + amplitude.im ** 2;
+    const normalisation =
+        fockFactorialProduct(inputState) * fockFactorialProduct(outputState);
+
+    const quantumPer = valid ? permanentComplex(submatrix) : { re: 0, im: 0 };
+    const quantumProbability = valid ? absSquared(quantumPer) / normalisation : 0;
+
+    const probSubmatrix = probabilityMatrix(submatrix);
+    const classicalPer = valid ? permanentReal(probSubmatrix) : 0;
+    const classicalProbability = valid ? classicalPer / normalisation : 0;
+
+    const partial = valid
+        ? partialDistinguishableProbability(submatrix, overlap, normalisation)
+        : {
+            probability: 0,
+            weightedSum: { re: 0, im: 0 },
+            pathCount: 0,
+            termCount: 0,
+        };
 
     function changeOutputRail(rail: number, delta: number) {
         setOutputState((current) => {
             const next = [...current];
             const total = current.reduce((a, b) => a + b, 0);
-            const proposed = Math.max(0, next[rail] + delta);
 
             if (delta > 0 && total >= photonCount) return current;
 
-            next[rail] = proposed;
+            next[rail] = Math.max(0, next[rail] + delta);
             return next;
         });
     }
@@ -262,8 +398,9 @@ export default function PermanentExplorerPanel() {
             <div style={{ marginBottom: 14 }}>
                 <h3 style={{ margin: 0, color: "#0f172a" }}>Permanent Explorer</h3>
                 <p style={{ margin: "6px 0 0", fontSize: 13, color: "#475569", lineHeight: 1.5 }}>
-                    Choose a candidate output state. The highlighted entries show which amplitudes
-                    from the cumulative unitary are copied into the repeated submatrix.
+                    Choose a candidate output state. The same repeated submatrix is used to compare
+                    three cases: fully indistinguishable photons, fully distinguishable photons, and
+                    the current partial distinguishability setting.
                 </p>
             </div>
 
@@ -280,6 +417,7 @@ export default function PermanentExplorerPanel() {
                         <div style={cardStyle}>
                             <strong>Fixed input state</strong>
                             <KatexBlock math={`\\mathbf{s}=${ket(inputState)}`} />
+
                             {inputState.map((count, rail) => (
                                 <div
                                     key={rail}
@@ -355,8 +493,10 @@ export default function PermanentExplorerPanel() {
                             </div>
                         )}
 
-                        <div style={cardStyle}>
-                            <strong>1. Cumulative unitary</strong>
+                        <Section
+                            title="1. Cumulative unitary"
+                            description="The highlighted entries are the single-photon probability amplitudes that are copied into the repeated submatrix."
+                        >
                             <div style={{ overflowX: "auto", marginTop: 10 }}>
                                 <table style={{ borderCollapse: "collapse", width: "100%" }}>
                                     <thead>
@@ -392,10 +532,12 @@ export default function PermanentExplorerPanel() {
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </Section>
 
-                        <div style={cardStyle}>
-                            <strong>2. Repeated submatrix</strong>
+                        <Section
+                            title="2. Repeated submatrix"
+                            description="Rows are repeated according to the output photons. Columns are repeated according to the input photons."
+                        >
                             <div style={{ overflowX: "auto", marginTop: 10 }}>
                                 <table style={{ borderCollapse: "collapse", width: "100%" }}>
                                     <tbody>
@@ -425,29 +567,54 @@ export default function PermanentExplorerPanel() {
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </Section>
 
-                        <div style={cardStyle}>
-                            <strong>3. Permanent calculation</strong>
-
+                        <Section
+                            title="3. Fully indistinguishable photons, η = 1"
+                            description="Amplitudes are summed first, then squared. This is the bosonic permanent calculation."
+                        >
                             <KatexBlock
-                                math={`\\operatorname{Per}(U_{\\mathbf{r},\\mathbf{s}})=${formatComplex(per)}`}
+                                math={`\\operatorname{Per}(U_{\\mathbf{r},\\mathbf{s}})=${formatComplex(
+                                    quantumPer
+                                )}`}
                             />
-
                             <KatexBlock
-                                math={`A(\\mathbf{s}\\to\\mathbf{r})=\\frac{\\operatorname{Per}(U_{\\mathbf{r},\\mathbf{s}})}{\\sqrt{\\prod_i s_i!\\prod_j r_j!}}=\\frac{${formatComplex(per)}}{${formatReal(norm)}}=${formatComplex(amplitude)}`}
+                                math={`P_{\\eta=1}=\\frac{|\\operatorname{Per}(U_{\\mathbf{r},\\mathbf{s}})|^2}{\\prod_i s_i!\\prod_j r_j!}=${formatReal(
+                                    quantumProbability
+                                )}`}
                             />
+                        </Section>
 
+                        <Section
+                            title="4. Fully distinguishable photons, η = 0"
+                            description="Each path probability is calculated first, then the probabilities are added. This removes interference terms."
+                        >
                             <KatexBlock
-                                math={`P(\\mathbf{s}\\to\\mathbf{r})=|A|^2=${formatReal(probability)}`}
+                                math={`U_{ij}\\mapsto |U_{ij}|^2`}
+                            />
+                            <KatexBlock
+                                math={`P_{\\eta=0}=\\frac{\\operatorname{Per}(|U_{\\mathbf{r},\\mathbf{s}}|^2)}{\\prod_i s_i!\\prod_j r_j!}=${formatReal(
+                                    classicalProbability
+                                )}`}
+                            />
+                        </Section>
+
+                        <Section
+                            title={`5. Partially distinguishable photons, η = ${formatReal(overlap)}`}
+                            description="This uses the same η value as the current photon-overlap slider. Path-pair interference terms are weighted: identical path pairs survive fully, while different path pairs are suppressed by powers of η."
+                        >
+                            <KatexBlock
+                                math={`P_{\\eta}=\\frac{1}{\\prod_i s_i!\\prod_j r_j!}\\sum_{\\sigma,\\tau}\\left(\\prod_k U_{r_k,s_{\\sigma(k)}}\\right)\\left(\\prod_k U_{r_k,s_{\\tau(k)}}\\right)^*\\eta^{d(\\sigma,\\tau)}`}
+                            />
+                            <KatexBlock
+                                math={`P_{\\eta=${formatReal(overlap)}}=${formatReal(partial.probability)}`}
                             />
 
                             <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.5 }}>
-                                The permanent appears because identical bosons require us to add the
-                                amplitudes for every indistinguishable assignment of input photons to
-                                output photons, without determinant-style minus signs.
+                                This calculation used <strong>{partial.pathCount}</strong> many-photon paths
+                                and <strong>{partial.termCount}</strong> path-pair interference terms.
                             </p>
-                        </div>
+                        </Section>
                     </div>
                 </div>
             </div>
