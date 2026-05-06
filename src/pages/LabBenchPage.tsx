@@ -9,6 +9,7 @@ import TheoryPanel from "@/components/Results/TheoryPanel";
 import OutputTablePanel from "@/components/Results/OutputTablePanel";
 import { useExperimentStore } from "@/store/useExperimentStore";
 import { ExportablePanel } from "@/components/Export/ExportablePanel";
+import PermanentExplorerPanel from "@/components/Results/PermanentExplorerPanel";
 
 const LabBenchPage: React.FC = () => {
     const railCount = useExperimentStore((state) => state.railCount);
@@ -124,6 +125,20 @@ const LabBenchPage: React.FC = () => {
                           data={results?.theory ?? null}
                       >
                           <TheoryPanel />
+                      </ExportablePanel>
+
+                      <ExportablePanel
+                          title="Permanent Explorer"
+                          imageFilename="permanent-explorer.png"
+                          dataFilename="permanent-explorer.json"
+                          dataFormat="json"
+                          data={{
+                              inputState,
+                              selectedStep,
+                              theory: results?.theory ?? null,
+                          }}
+                      >
+                          <PermanentExplorerPanel />
                       </ExportablePanel>
 
                       <OutputTablePanel />
