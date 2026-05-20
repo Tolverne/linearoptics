@@ -154,7 +154,7 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
 
   setRailCount: (railCount: number) =>
     set((state) => {
-      const clampedRailCount = Math.min(6, Math.max(2, Math.floor(railCount)));
+      const clampedRailCount = Math.min(20, Math.max(2, Math.floor(railCount)));
 
       const nextInputState = normaliseInputState(
         state.inputState,

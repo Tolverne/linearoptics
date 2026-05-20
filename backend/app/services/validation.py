@@ -4,7 +4,7 @@ from app.schemas import SimulationRequest
 def validate_simulation_request(request: SimulationRequest) -> list[str]:
     messages: list[str] = []
 
-    if request.railCount < 2 or request.railCount > 6:
+    if request.railCount < 2 or request.railCount > 20:
         messages.append("railCount must be between 2 and 6.")
 
     if len(request.inputState) != request.railCount:

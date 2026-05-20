@@ -22,7 +22,7 @@ const GRID_LINE = "#e2e8f0";
 const GRID_BACKGROUND = "#f8fafc";
 
 const MIN_RAILS = 2;
-const MAX_RAILS = 6;
+const MAX_RAILS = 20;
 
 
 type DraggedExistingComponentPayload = {
