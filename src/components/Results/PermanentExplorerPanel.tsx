@@ -205,6 +205,16 @@ function photonDots(count: number) {
     );
 }
 
+function complexMatrixToLatex(matrix: Complex[][]): string {
+    if (matrix.length === 0) return "\\begin{bmatrix}\\end{bmatrix}";
+
+    const rows = matrix.map((row) =>
+        row.map((z) => formatComplex(z)).join(" & ")
+    );
+
+    return `\\begin{bmatrix} ${rows.join(" \\\\ ")} \\end{bmatrix}`;
+}
+
 const buttonStyle: React.CSSProperties = {
     width: 30,
     height: 28,
@@ -381,6 +391,56 @@ export default function PermanentExplorerPanel() {
             termCount: 0,
         };
 
+    const permanentLatexExport = [
+        `% Permanent Explorer`,
+        ``,
+        `\\mathbf{s} = ${ket(inputState)}`,
+        `\\mathbf{r} = ${ket(outputState)}`,
+        ``,
+        `% Cumulative unitary`,
+        `U = ${complexMatrixToLatex(unitary)}`,
+        ``,
+        `% Repeated submatrix`,
+        `U_{\\mathbf{r},\\mathbf{s}} = ${complexMatrixToLatex(submatrix)}`,
+        ``,
+        `% Fully indistinguishable photons`,
+        `\\operatorname{Per}(U_{\\mathbf{r},\\mathbf{s}}) = ${formatComplex(
+            quantumPer
+        )}`,
+        `P_{\\eta=1}=\\frac{|\\operatorname{Per}(U_{\\mathbf{r},\\mathbf{s}})|^2}{\\prod_i s_i!\\prod_j r_j!}=${formatReal(
+            quantumProbability
+        )}`,
+        ``,
+        `% Fully distinguishable photons`,
+        `P_{\\eta=0}=\\frac{\\operatorname{Per}(|U_{\\mathbf{r},\\mathbf{s}}|^2)}{\\prod_i s_i!\\prod_j r_j!}=${formatReal(
+            classicalProbability
+        )}`,
+        ``,
+        `% Partially distinguishable photons`,
+        `P_{\\eta}=\\frac{1}{\\prod_i s_i!\\prod_j r_j!}\\sum_{\\sigma,\\tau}\\left(\\prod_k U_{r_k,s_{\\sigma(k)}}\\right)\\left(\\prod_k U_{r_k,s_{\\tau(k)}}\\right)^*\\eta^{d(\\sigma,\\tau)}`,
+        `P_{\\eta=${formatReal(overlap)}}=${formatReal(partial.probability)}`,
+    ].join("\n\n");
+
+    async function copyPermanentLatex() {
+        await navigator.clipboard.writeText(permanentLatexExport);
+    }
+
+    function downloadPermanentLatex() {
+        const blob = new Blob([permanentLatexExport], {
+            type: "application/x-tex",
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.download = "permanent-explorer.tex";
+        link.href = url;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+
     function changeOutputRail(rail: number, delta: number) {
         setOutputState((current) => {
             const next = [...current];
@@ -396,7 +456,27 @@ export default function PermanentExplorerPanel() {
     return (
         <div style={panelStyle}>
             <div style={{ marginBottom: 14 }}>
-                <h3 style={{ margin: 0, color: "#0f172a" }}>Permanent Explorer</h3>
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                    }}
+                >
+                    <h3 style={{ margin: 0, color: "#0f172a" }}>Permanent Explorer</h3>
+
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button type="button" onClick={copyPermanentLatex}>
+                            Copy LaTeX
+                        </button>
+
+                        <button type="button" onClick={downloadPermanentLatex}>
+                            Download LaTeX
+                        </button>
+                    </div>
+                </div>
                 <p style={{ margin: "6px 0 0", fontSize: 13, color: "#475569", lineHeight: 1.5 }}>
                     Choose a candidate output state. The same repeated submatrix is used to compare
                     three cases: fully indistinguishable photons, fully distinguishable photons, and

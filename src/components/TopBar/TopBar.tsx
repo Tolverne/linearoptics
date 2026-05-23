@@ -4,7 +4,7 @@ import RunButton from "./RunButton";
 import ClearButton from "./ClearButton";
 import ResetButton from "./ResetButton";
 import { useExperimentStore } from "@/store/useExperimentStore";
-
+import LoadCircuitButton from "./LoadCircuitButton";
 
 
 const numberInputStyle: React.CSSProperties = {
@@ -109,10 +109,11 @@ const setNumericDisplayMode = useExperimentStore(
               flexWrap: "wrap",
             }}
           >
-            <ExampleSelector />
-            <ClearButton />
-            <ResetButton />
-            <RunButton />
+                      <ExampleSelector />
+                      <LoadCircuitButton />
+                      <ClearButton />
+                      <ResetButton />
+                      <RunButton />
           </div>
 
           <div

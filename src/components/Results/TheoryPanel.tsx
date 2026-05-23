@@ -17,11 +17,13 @@ const panelStyle: React.CSSProperties = {
 };
 
 const cardStyle: React.CSSProperties = {
-  border: "1px solid #e2e8f0",
-  borderRadius: 12,
-  background: "#f8fafc",
-  padding: 12,
-  minHeight: 220,
+    border: "1px solid #e2e8f0",
+    borderRadius: 12,
+    background: "#f8fafc",
+    padding: 12,
+    minHeight: 220,
+    minWidth: 0,
+    overflowX: "auto",
 };
 
 const labelStyle: React.CSSProperties = {
@@ -64,7 +66,16 @@ function KatexBlock({ math }: { math: string }) {
     html = `<pre style="white-space:pre-wrap;color:#b91c1c;margin:0;">${message}\n\n${math}</pre>`;
   }
 
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+        <div
+            style={{
+                overflowX: "auto",
+                overflowY: "visible",
+                maxWidth: "100%",
+            }}
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
+    );
 }
 
 function formatReal(value: number): string {
@@ -297,6 +308,50 @@ const TheoryPanel: React.FC = () => {
     `\\left|\\psi_{\\mathrm{after}\\,${selectedSnapshot.label}}\\right\\rangle`
   );
 
+    const theoryLatexExport = [
+        `% Theory Panel: ${selectedSnapshot.label}`,
+        ``,
+        `% Cumulative action`,
+        cumulativeInputLatex,
+        ``,
+        multiplicationLatex(selectedSnapshot),
+        ``,
+        cumulativeMatrixLatex
+            ? `U_{\\leq \\mathrm{${selectedSnapshot.label}}} = ${cumulativeMatrixLatex}`
+            : `% Cumulative matrix unavailable`,
+        ``,
+        cumulativeOutputLatex,
+        ``,
+        `% Action of selected column only`,
+        singleColumnInputLatex,
+        ``,
+        activeColumnMatrixLabel(
+            activeColumnOperator?.label ?? selectedSnapshot.label,
+            activeColumnMatrixLatex
+        ),
+        ``,
+        singleColumnOutputLatex,
+    ].join("\n\n");
+
+    function downloadTheoryLatex() {
+        const blob = new Blob([theoryLatexExport], {
+            type: "application/x-tex",
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.download = `theory-${selectedSnapshot.label}.tex`;
+        link.href = url;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    async function copyTheoryLatex() {
+        await navigator.clipboard.writeText(theoryLatexExport);
+    }
+
   return (
     <div style={panelStyle}>
       <div
@@ -332,7 +387,24 @@ const TheoryPanel: React.FC = () => {
           </div>
         </div>
 
-        <div style={headerTagStyle}>Active column: {selectedSnapshot.label}</div>
+              <div
+                  style={{
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                  }}
+              >
+                  <div style={headerTagStyle}>Active column: {selectedSnapshot.label}</div>
+
+                  <button type="button" onClick={copyTheoryLatex}>
+                      Copy LaTeX
+                  </button>
+
+                  <button type="button" onClick={downloadTheoryLatex}>
+                      Download LaTeX
+                  </button>
+              </div>
       </div>
 
       <div
@@ -352,7 +424,7 @@ const TheoryPanel: React.FC = () => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
           gap: 16,
           marginBottom: 20,
         }}
@@ -402,7 +474,7 @@ const TheoryPanel: React.FC = () => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
           gap: 16,
         }}
       >
