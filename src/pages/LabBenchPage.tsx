@@ -10,6 +10,7 @@ import OutputTablePanel from "@/components/Results/OutputTablePanel";
 import { useExperimentStore } from "@/store/useExperimentStore";
 import { ExportablePanel } from "@/components/Export/ExportablePanel";
 import PermanentExplorerPanel from "@/components/Results/PermanentExplorerPanel";
+import TotalVariationSweepPanel from "@/components/Results/TotalVariationSweepPanel";
 
 const LabBenchPage: React.FC = () => {
     const railCount = useExperimentStore((state) => state.railCount);
@@ -116,6 +117,22 @@ const LabBenchPage: React.FC = () => {
                       >
                           <PhotonOverlapSweepPanel />
                       </ExportablePanel>
+
+                      <ExportablePanel
+                          title="Total Variation Distance"
+                          imageFilename="total-variation-distance.png"
+                          dataFilename="total-variation-distance.json"
+                          dataFormat="json"
+                          data={{
+                              selectedStep,
+                              overlapSweepOptions: overlapSweep,
+                              theorySweep: results?.overlapSweep ?? null,
+                          }}
+                      >
+                          <TotalVariationSweepPanel />
+                      </ExportablePanel>
+
+
 
                       <ExportablePanel
                           title="Theory Panel"

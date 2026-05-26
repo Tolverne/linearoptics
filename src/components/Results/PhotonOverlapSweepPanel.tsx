@@ -124,7 +124,10 @@ function makePath(
 
 
 const PhotonOverlapSweepPanel: React.FC = () => {
-  const [showHomDelay, setShowHomDelay] = React.useState(true);
+    const showHomDelay = useExperimentStore((state) => state.showHomDelayAxis);
+    const setShowHomDelay = useExperimentStore(
+        (state) => state.setShowHomDelayAxis
+    );
   const results = useExperimentStore((state) => state.results);
   const selectedStep = useExperimentStore((state) => state.selectedStep);
   const selectedSweepOccupations = useExperimentStore(

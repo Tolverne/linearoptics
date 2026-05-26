@@ -32,6 +32,10 @@ type ExperimentStore = {
   isRunning: boolean;
   error: string | null;
 
+
+    showHomDelayAxis: boolean;
+    setShowHomDelayAxis: (showHomDelayAxis: boolean) => void;
+
   setRailCount: (railCount: number) => void;
   setInputPhoton: (rail: number, value: number) => void;
   setOverlap: (overlap: number) => void;
@@ -144,11 +148,17 @@ function defaultState() {
 
     isRunning: false,
     error: null,
+
+    showHomDelayAxis: true,
+
   };
 }
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
   ...defaultState(),
+
+    setShowHomDelayAxis: (showHomDelayAxis: boolean) =>
+        set({ showHomDelayAxis }),
 
   setNumericDisplayMode: (mode) => set({ numericDisplayMode: mode }),
 
