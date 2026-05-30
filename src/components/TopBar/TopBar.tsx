@@ -5,7 +5,7 @@ import ClearButton from "./ClearButton";
 import ResetButton from "./ResetButton";
 import { useExperimentStore } from "@/store/useExperimentStore";
 import LoadCircuitButton from "./LoadCircuitButton";
-
+import ModuleLinkButton from "./ModuleLinkButton";
 
 const numberInputStyle: React.CSSProperties = {
   width: "100%",
@@ -89,6 +89,7 @@ const setNumericDisplayMode = useExperimentStore(
             distributions, and compare experimental samples with theoretical
             predictions.
           </div>
+                  <ModuleLinkButton />
         </div>
 
         <div
