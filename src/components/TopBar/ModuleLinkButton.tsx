@@ -22,7 +22,7 @@ const ModuleLinkButton: React.FC = () => {
                 whiteSpace: "nowrap",
             }}
         >
-            Module PDF
+            Photonic Circuits Introduction and Lab Bench Guide
         </a>
     );
 };
