@@ -3,6 +3,7 @@ import { useExperimentStore } from "@/store/useExperimentStore";
 import { homExample } from "@/lib/examples/hom";
 import { dualRailSwapExample } from "@/lib/examples/dualRailSwap";
 import { NSexample } from "@/lib/examples/NSexample";
+import { klmCNOT } from "@/lib/examples/klmCNOT";
 import type { SimulationRequest } from "@/types/simulation";
 
 const singlePhotonExample: SimulationRequest = {
@@ -75,6 +76,8 @@ const ExampleSelector: React.FC = () => {
         applyExample(dualRailSwapExample);
     } else if (value === "NSexample") {
         applyExample(NSexample);
+    } else if (value === "klmCNOT") {
+        applyExample(klmCNOT);
     }
 
     event.target.value = "";
@@ -121,6 +124,7 @@ const ExampleSelector: React.FC = () => {
         <option value="hom">Hong–Ou–Mandel</option>
         <option value="dual-rail-swap">Dual-rail swap routing</option>
         <option value="NSexample">NSexample</option>
+        <option value="klmCNOT">klmCNOT</option>
       </select>
     </div>
   );
