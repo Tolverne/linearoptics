@@ -2,6 +2,7 @@ import React from "react";
 import { useExperimentStore } from "@/store/useExperimentStore";
 import { homExample } from "@/lib/examples/hom";
 import { dualRailSwapExample } from "@/lib/examples/dualRailSwap";
+import { NSexample } from "@/lib/examples/NSexample";
 import type { SimulationRequest } from "@/types/simulation";
 
 const singlePhotonExample: SimulationRequest = {
@@ -71,7 +72,9 @@ const ExampleSelector: React.FC = () => {
     } else if (value === "hom") {
       applyExample(homExample);
     } else if (value === "dual-rail-swap") {
-      applyExample(dualRailSwapExample);
+        applyExample(dualRailSwapExample);
+    } else if (value === "NSexample") {
+        applyExample(NSexample);
     }
 
     event.target.value = "";
@@ -117,6 +120,7 @@ const ExampleSelector: React.FC = () => {
         <option value="single-photon-bs">Single photon + beam splitter</option>
         <option value="hom">Hong–Ou–Mandel</option>
         <option value="dual-rail-swap">Dual-rail swap routing</option>
+        <option value="NSexample">NSexample</option>
       </select>
     </div>
   );
