@@ -21,6 +21,7 @@ const LabBenchPage: React.FC = () => {
     const selectedStep = useExperimentStore((state) => state.selectedStep);
     const inspectorMode = useExperimentStore((state) => state.inspectorMode);
     const overlapSweep = useExperimentStore((state) => state.overlapSweep);
+    const postSelection = useExperimentStore((state) => state.postSelection);
     const selectedSweepOccupations = useExperimentStore(
         (state) => state.selectedSweepOccupations
     );
@@ -93,6 +94,7 @@ const LabBenchPage: React.FC = () => {
                               selectedStep,
                               overlap,
                               inspectorMode,
+                              postSelection,
                               exactIntermediateStates: results?.intermediateStates ?? [],
                               sampledIntermediateStates: results?.sampledIntermediateStates ?? [],
                               overlapSweep: results?.overlapSweep ?? null,
@@ -101,6 +103,7 @@ const LabBenchPage: React.FC = () => {
                       >
                           <OutputDistributionChart />
                       </ExportablePanel>
+
 
                       <ExportablePanel
                           title="Photon Overlap Sweep"

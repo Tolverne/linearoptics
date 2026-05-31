@@ -3,6 +3,8 @@ import type {
   CircuitComponent,
   Occupation,
   OverlapSweepOptions,
+  PostSelectionCondition,
+  PostSelectionConfig,
   SimulationRequest,
   SimulationResponse,
 } from "@/types/simulation";
@@ -32,6 +34,18 @@ type ExperimentStore = {
   isRunning: boolean;
   error: string | null;
 
+    postSelection: PostSelectionConfig;
+
+    setPostSelectionEnabled: (enabled: boolean) => void;
+    addPostSelectionCondition: (condition: PostSelectionCondition) => void;
+    updatePostSelectionCondition: (
+        id: string,
+        patch: Partial<PostSelectionCondition>
+    ) => void;
+    removePostSelectionCondition: (id: string) => void;
+    setPostSelectionHideMeasuredRails: (hideMeasuredRails: boolean) => void;
+    setPostSelectionRenormalise: (renormalise: boolean) => void;
+    clearPostSelectionConditions: () => void;
 
     showHomDelayAxis: boolean;
     setShowHomDelayAxis: (showHomDelayAxis: boolean) => void;
@@ -127,6 +141,15 @@ function defaultOverlapSweep(): OverlapSweepOptions {
   };
 }
 
+function defaultPostSelection(): PostSelectionConfig {
+    return {
+        enabled: false,
+        conditions: [],
+        hideMeasuredRails: true,
+        renormalise: true,
+    };
+}
+
 function defaultState() {
   return {
     railCount: DEFAULT_RAIL_COUNT,
@@ -150,9 +173,11 @@ function defaultState() {
     error: null,
 
     showHomDelayAxis: true,
-
+    postSelection: defaultPostSelection(),
   };
 }
+
+
 
 export const useExperimentStore = create<ExperimentStore>((set) => ({
   ...defaultState(),
@@ -389,6 +414,72 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
     set({
       ...defaultState(),
     }),
+
+    setPostSelectionEnabled: (enabled) =>
+        set((state) => ({
+            postSelection: {
+                ...state.postSelection,
+                enabled,
+            },
+        })),
+
+    addPostSelectionCondition: (condition) =>
+        set((state) => ({
+            postSelection: {
+                ...state.postSelection,
+                conditions: [...state.postSelection.conditions, condition],
+            },
+        })),
+
+    updatePostSelectionCondition: (id, patch) =>
+        set((state) => ({
+            postSelection: {
+                ...state.postSelection,
+                conditions: state.postSelection.conditions.map((condition) =>
+                    condition.id === id
+                        ? ({
+                            ...condition,
+                            ...patch,
+                        } as PostSelectionCondition)
+                        : condition
+                ),
+            },
+        })),
+
+    removePostSelectionCondition: (id) =>
+        set((state) => ({
+            postSelection: {
+                ...state.postSelection,
+                conditions: state.postSelection.conditions.filter(
+                    (condition) => condition.id !== id
+                ),
+            },
+        })),
+
+    setPostSelectionHideMeasuredRails: (hideMeasuredRails) =>
+        set((state) => ({
+            postSelection: {
+                ...state.postSelection,
+                hideMeasuredRails,
+            },
+        })),
+
+    setPostSelectionRenormalise: (renormalise) =>
+        set((state) => ({
+            postSelection: {
+                ...state.postSelection,
+                renormalise,
+            },
+        })),
+
+    clearPostSelectionConditions: () =>
+        set((state) => ({
+            postSelection: {
+                ...state.postSelection,
+                conditions: [],
+            },
+        })),
+
 
   loadExample: (example: SimulationRequest) =>
     set({

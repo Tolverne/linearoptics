@@ -179,3 +179,30 @@ export type GridCell = {
   rail: number;
   column: number;
 };
+
+export type PostSelectionCondition =
+    | {
+        id: string;
+        type: "rail_equals";
+        rail: number;
+        photonCount: number;
+    }
+    | {
+        id: string;
+        type: "rail_group_total";
+        rails: number[];
+        photonCount: number;
+    }
+    | {
+        id: string;
+        type: "rail_group_pattern";
+        rails: number[];
+        pattern: number[];
+    };
+
+export type PostSelectionConfig = {
+    enabled: boolean;
+    conditions: PostSelectionCondition[];
+    hideMeasuredRails: boolean;
+    renormalise: boolean;
+};
