@@ -146,27 +146,11 @@ function applyPostSelection(
     };
 }
 
-function makeId(prefix: string): string {
-    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-        return `${prefix}-${crypto.randomUUID()}`;
-    }
 
-    return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
-}
 
-function parseRailList(value: string): number[] {
-    return value
-        .split(",")
-        .map((part) => Number(part.trim()))
-        .filter((value) => Number.isInteger(value) && value >= 0);
-}
 
-function parsePattern(value: string): number[] {
-    return value
-        .split(",")
-        .map((part) => Number(part.trim()))
-        .filter((value) => Number.isInteger(value) && value >= 0);
-}
+
+
 
 
 
@@ -293,447 +277,12 @@ function ModeToggle({
     );
 }
 
-function conditionSummary(condition: PostSelectionCondition): string {
-    if (condition.type === "rail_equals") {
-        return `rail ${condition.rail} = ${condition.photonCount}`;
-    }
 
-    if (condition.type === "rail_group_total") {
-        return `rails [${condition.rails.join(", ")}] total = ${condition.photonCount
-            }`;
-    }
 
-    return `rails [${condition.rails.join(", ")}] pattern = [${condition.pattern.join(
-        ", "
-    )}]`;
-}
 
-function PostSelectionControls({
-    railCount,
-    config,
-    setEnabled,
-    addCondition,
-    updateCondition,
-    removeCondition,
-    setHideMeasuredRails,
-    setRenormalise,
-    clearConditions,
-    successProbability,
-    successfulOutcomeCount,
-    totalOutcomeCount,
-}: {
-    railCount: number;
-    config: PostSelectionConfig;
-    setEnabled: (enabled: boolean) => void;
-    addCondition: (condition: PostSelectionCondition) => void;
-    updateCondition: (
-        id: string,
-        patch: Partial<PostSelectionCondition>
-    ) => void;
-    removeCondition: (id: string) => void;
-    setHideMeasuredRails: (hideMeasuredRails: boolean) => void;
-    setRenormalise: (renormalise: boolean) => void;
-    clearConditions: () => void;
-    successProbability: number;
-    successfulOutcomeCount: number;
-    totalOutcomeCount: number;
-}) {
-    function addRailEquals() {
-        addCondition({
-            id: makeId("ps"),
-            type: "rail_equals",
-            rail: 0,
-            photonCount: 1,
-        });
-    }
 
-    function addGroupTotal() {
-        addCondition({
-            id: makeId("ps"),
-            type: "rail_group_total",
-            rails: [0, 1].filter((rail) => rail < railCount),
-            photonCount: 1,
-        });
-    }
 
-    function addGroupPattern() {
-        addCondition({
-            id: makeId("ps"),
-            type: "rail_group_pattern",
-            rails: [0, 1].filter((rail) => rail < railCount),
-            pattern: [1, 0].slice(0, Math.min(2, railCount)),
-        });
-    }
 
-    function addDualRailValid() {
-        addCondition({
-            id: makeId("ps"),
-            type: "rail_group_total",
-            rails: [0, 1].filter((rail) => rail < railCount),
-            photonCount: 1,
-        });
-    }
-
-    return (
-        <div
-            style={{
-                marginTop: 14,
-                padding: 12,
-                borderRadius: 12,
-                border: "1px solid #e2e8f0",
-                background: "#f8fafc",
-            }}
-        >
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    marginBottom: 10,
-                }}
-            >
-                <label
-                    style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        fontSize: 13,
-                        fontWeight: 800,
-                        color: "#0f172a",
-                    }}
-                >
-                    <input
-                        type="checkbox"
-                        checked={config.enabled}
-                        onChange={(event) => setEnabled(event.target.checked)}
-                    />
-                    Enable post-selection
-                </label>
-
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button type="button" onClick={addRailEquals}>
-                        + Rail equals
-                    </button>
-
-                    <button type="button" onClick={addGroupTotal}>
-                        + Group total
-                    </button>
-
-                    <button type="button" onClick={addGroupPattern}>
-                        + Group pattern
-                    </button>
-
-                    <button type="button" onClick={addDualRailValid}>
-                        + Dual-rail valid
-                    </button>
-
-                    <button type="button" onClick={clearConditions}>
-                        Clear
-                    </button>
-                </div>
-            </div>
-
-            <div
-                style={{
-                    display: "grid",
-                    gap: 10,
-                    opacity: config.enabled ? 1 : 0.55,
-                }}
-            >
-                {config.conditions.length === 0 ? (
-                    <div
-                        style={{
-                            fontSize: 13,
-                            color: "#64748b",
-                            lineHeight: 1.5,
-                        }}
-                    >
-                        Add one or more conditions. Conditions are combined with AND.
-                    </div>
-                ) : (
-                    config.conditions.map((condition) => (
-                        <div
-                            key={condition.id}
-                            style={{
-                                display: "grid",
-                                gridTemplateColumns: "160px 1fr auto",
-                                gap: 10,
-                                alignItems: "center",
-                                padding: 10,
-                                borderRadius: 12,
-                                border: "1px solid #e2e8f0",
-                                background: "#ffffff",
-                            }}
-                        >
-                            <select
-                                disabled={!config.enabled}
-                                value={condition.type}
-                                onChange={(event) => {
-                                    const nextType = event.target
-                                        .value as PostSelectionCondition["type"];
-
-                                    if (nextType === "rail_equals") {
-                                        updateCondition(condition.id, {
-                                            type: "rail_equals",
-                                            rail: 0,
-                                            photonCount: 1,
-                                        } as Partial<PostSelectionCondition>);
-                                    } else if (nextType === "rail_group_total") {
-                                        updateCondition(condition.id, {
-                                            type: "rail_group_total",
-                                            rails: [0, 1].filter((rail) => rail < railCount),
-                                            photonCount: 1,
-                                        } as Partial<PostSelectionCondition>);
-                                    } else {
-                                        updateCondition(condition.id, {
-                                            type: "rail_group_pattern",
-                                            rails: [0, 1].filter((rail) => rail < railCount),
-                                            pattern: [1, 0].slice(0, Math.min(2, railCount)),
-                                        } as Partial<PostSelectionCondition>);
-                                    }
-                                }}
-                                style={inputStyle}
-                            >
-                                <option value="rail_equals">Rail equals</option>
-                                <option value="rail_group_total">Group total</option>
-                                <option value="rail_group_pattern">Group pattern</option>
-                            </select>
-
-                            <div
-                                style={{
-                                    display: "grid",
-                                    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-                                    gap: 8,
-                                    alignItems: "end",
-                                }}
-                            >
-                                {condition.type === "rail_equals" && (
-                                    <>
-                                        <label style={miniLabelStyle}>
-                                            Rail
-                                            <input
-                                                disabled={!config.enabled}
-                                                type="number"
-                                                min={0}
-                                                max={railCount - 1}
-                                                step={1}
-                                                value={condition.rail}
-                                                onChange={(event) =>
-                                                    updateCondition(condition.id, {
-                                                        rail: Math.min(
-                                                            railCount - 1,
-                                                            Math.max(0, Math.floor(Number(event.target.value)))
-                                                        ),
-                                                    })
-                                                }
-                                                style={inputStyle}
-                                            />
-                                        </label>
-
-                                        <label style={miniLabelStyle}>
-                                            Photon count
-                                            <input
-                                                disabled={!config.enabled}
-                                                type="number"
-                                                min={0}
-                                                step={1}
-                                                value={condition.photonCount}
-                                                onChange={(event) =>
-                                                    updateCondition(condition.id, {
-                                                        photonCount: Math.max(
-                                                            0,
-                                                            Math.floor(Number(event.target.value))
-                                                        ),
-                                                    })
-                                                }
-                                                style={inputStyle}
-                                            />
-                                        </label>
-                                    </>
-                                )}
-
-                                {condition.type === "rail_group_total" && (
-                                    <>
-                                        <label style={miniLabelStyle}>
-                                            Rails, comma-separated
-                                            <input
-                                                disabled={!config.enabled}
-                                                type="text"
-                                                value={condition.rails.join(",")}
-                                                onChange={(event) =>
-                                                    updateCondition(condition.id, {
-                                                        rails: parseRailList(event.target.value).filter(
-                                                            (rail) => rail < railCount
-                                                        ),
-                                                    })
-                                                }
-                                                style={inputStyle}
-                                            />
-                                        </label>
-
-                                        <label style={miniLabelStyle}>
-                                            Total photons
-                                            <input
-                                                disabled={!config.enabled}
-                                                type="number"
-                                                min={0}
-                                                step={1}
-                                                value={condition.photonCount}
-                                                onChange={(event) =>
-                                                    updateCondition(condition.id, {
-                                                        photonCount: Math.max(
-                                                            0,
-                                                            Math.floor(Number(event.target.value))
-                                                        ),
-                                                    })
-                                                }
-                                                style={inputStyle}
-                                            />
-                                        </label>
-                                    </>
-                                )}
-
-                                {condition.type === "rail_group_pattern" && (
-                                    <>
-                                        <label style={miniLabelStyle}>
-                                            Rails, comma-separated
-                                            <input
-                                                disabled={!config.enabled}
-                                                type="text"
-                                                value={condition.rails.join(",")}
-                                                onChange={(event) => {
-                                                    const rails = parseRailList(event.target.value).filter(
-                                                        (rail) => rail < railCount
-                                                    );
-
-                                                    updateCondition(condition.id, {
-                                                        rails,
-                                                        pattern: condition.pattern.slice(0, rails.length),
-                                                    });
-                                                }}
-                                                style={inputStyle}
-                                            />
-                                        </label>
-
-                                        <label style={miniLabelStyle}>
-                                            Pattern, comma-separated
-                                            <input
-                                                disabled={!config.enabled}
-                                                type="text"
-                                                value={condition.pattern.join(",")}
-                                                onChange={(event) =>
-                                                    updateCondition(condition.id, {
-                                                        pattern: parsePattern(event.target.value),
-                                                    })
-                                                }
-                                                style={inputStyle}
-                                            />
-                                        </label>
-                                    </>
-                                )}
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => removeCondition(condition.id)}
-                                disabled={!config.enabled}
-                                style={{
-                                    padding: "7px 10px",
-                                    borderRadius: 10,
-                                    border: "1px solid #fecaca",
-                                    background: "#ffffff",
-                                    color: "#991b1b",
-                                    fontSize: 12,
-                                    fontWeight: 800,
-                                    cursor: config.enabled ? "pointer" : "not-allowed",
-                                }}
-                            >
-                                Remove
-                            </button>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            <div
-                style={{
-                    display: "flex",
-                    gap: 14,
-                    flexWrap: "wrap",
-                    marginTop: 12,
-                    fontSize: 13,
-                    color: "#334155",
-                }}
-            >
-                <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <input
-                        type="checkbox"
-                        checked={config.hideMeasuredRails}
-                        disabled={!config.enabled}
-                        onChange={(event) => setHideMeasuredRails(event.target.checked)}
-                    />
-                    Hide measured rails
-                </label>
-
-                <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <input
-                        type="checkbox"
-                        checked={config.renormalise}
-                        disabled={!config.enabled}
-                        onChange={(event) => setRenormalise(event.target.checked)}
-                    />
-                    Renormalise successful outputs
-                </label>
-            </div>
-
-            {config.enabled && config.conditions.length > 0 && (
-                <div
-                    style={{
-                        marginTop: 12,
-                        padding: 10,
-                        borderRadius: 10,
-                        background: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                        fontSize: 13,
-                        color: "#334155",
-                        lineHeight: 1.5,
-                    }}
-                >
-                    <strong>Success probability:</strong>{" "}
-                    {successProbability.toFixed(6)}
-                    <br />
-                    <strong>Successful outcomes:</strong> {successfulOutcomeCount} /{" "}
-                    {totalOutcomeCount}
-                    <br />
-                    <strong>Conditions:</strong>{" "}
-                    {config.conditions.map(conditionSummary).join(" AND ")}
-                </div>
-            )}
-        </div>
-    );
-}
-
-const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "7px 8px",
-    borderRadius: 10,
-    border: "1px solid #cbd5e1",
-    background: "#ffffff",
-    fontSize: 13,
-    color: "#0f172a",
-    fontWeight: 700,
-    boxSizing: "border-box",
-};
-
-const miniLabelStyle: React.CSSProperties = {
-    display: "grid",
-    gap: 4,
-    fontSize: 11,
-    fontWeight: 800,
-    color: "#475569",
-};
 
 const OutputDistributionChart: React.FC = () => {
     const [pageIndex, setPageIndex] = useState(0);
@@ -781,37 +330,11 @@ const OutputDistributionChart: React.FC = () => {
         selectedStep
     );
 
-    const railCount = useExperimentStore((state) => state.railCount);
+
 
     const postSelection = useExperimentStore((state) => state.postSelection);
 
-    const setPostSelectionEnabled = useExperimentStore(
-        (state) => state.setPostSelectionEnabled
-    );
 
-    const addPostSelectionCondition = useExperimentStore(
-        (state) => state.addPostSelectionCondition
-    );
-
-    const updatePostSelectionCondition = useExperimentStore(
-        (state) => state.updatePostSelectionCondition
-    );
-
-    const removePostSelectionCondition = useExperimentStore(
-        (state) => state.removePostSelectionCondition
-    );
-
-    const setPostSelectionHideMeasuredRails = useExperimentStore(
-        (state) => state.setPostSelectionHideMeasuredRails
-    );
-
-    const setPostSelectionRenormalise = useExperimentStore(
-        (state) => state.setPostSelectionRenormalise
-    );
-
-    const clearPostSelectionConditions = useExperimentStore(
-        (state) => state.clearPostSelectionConditions
-    );
 
 
 
@@ -861,12 +384,6 @@ const OutputDistributionChart: React.FC = () => {
         safePageIndex * OUTCOMES_PER_PAGE,
         safePageIndex * OUTCOMES_PER_PAGE + OUTCOMES_PER_PAGE
     );
-
-    const postSelectionRemovedAllOutcomes =
-        postSelection.enabled &&
-        postSelection.conditions.length > 0 &&
-        chartData.length > 0 &&
-        sortedChartData.length === 0;
 
     const activeColumn =
         effectiveMode === "sampled"
@@ -954,9 +471,8 @@ const OutputDistributionChart: React.FC = () => {
                             lineHeight: 1.5,
                         }}
                     >
-                        View the output distribution for the selected circuit column. Click bars to add
-                        states to the photon-overlap graph, or apply post-selection criteria to analyse
-                        heralded gates.
+                        Click bars to add or remove output states from the photon-overlap
+                        sweep graph. The most probable outputs are shown first.
                     </div>
                 </div>
 
@@ -1161,21 +677,33 @@ const OutputDistributionChart: React.FC = () => {
 
             </div>
 
+            {postSelection.enabled && postSelection.conditions.length > 0 && (
+                <div
+                    style={{
+                        marginTop: 14,
+                        padding: 12,
+                        borderRadius: 12,
+                        border: "1px solid #e2e8f0",
+                        background: "#f8fafc",
+                        fontSize: 13,
+                        color: "#334155",
+                        lineHeight: 1.5,
+                    }}
+                >
+                    <strong>Post-selection active.</strong>
+                    <br />
+                    <strong>Success probability:</strong>{" "}
+                    {postSelected.successProbability.toFixed(6)}
+                    <br />
+                    <strong>Successful outcomes:</strong>{" "}
+                    {postSelected.successfulOutcomeCount} / {postSelected.totalOutcomeCount}
+                    <br />
+                    {postSelection.renormalise
+                        ? "Displayed probabilities are renormalised over successful outcomes."
+                        : "Displayed probabilities are unnormalised successful-output probabilities."}
+                </div>
+            )}
 
-            <PostSelectionControls
-                railCount={railCount}
-                config={postSelection}
-                setEnabled={setPostSelectionEnabled}
-                addCondition={addPostSelectionCondition}
-                updateCondition={updatePostSelectionCondition}
-                removeCondition={removePostSelectionCondition}
-                setHideMeasuredRails={setPostSelectionHideMeasuredRails}
-                setRenormalise={setPostSelectionRenormalise}
-                clearConditions={clearPostSelectionConditions}
-                successProbability={postSelected.successProbability}
-                successfulOutcomeCount={postSelected.successfulOutcomeCount}
-                totalOutcomeCount={postSelected.totalOutcomeCount}
-            />
 
 
             <div

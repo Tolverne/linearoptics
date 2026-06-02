@@ -11,6 +11,7 @@ import { useExperimentStore } from "@/store/useExperimentStore";
 import { ExportablePanel } from "@/components/Export/ExportablePanel";
 import PermanentExplorerPanel from "@/components/Results/PermanentExplorerPanel";
 import TotalVariationSweepPanel from "@/components/Results/TotalVariationSweepPanel";
+import PostSelectionPanel from "@/components/Controls/PostSelectionPanel";
 
 const LabBenchPage: React.FC = () => {
     const railCount = useExperimentStore((state) => state.railCount);
@@ -59,8 +60,10 @@ const LabBenchPage: React.FC = () => {
               alignSelf: "start",
             }}
           >
-            <ToolboxPanel />
-            <ComponentInspectorPanel />
+                      <ToolboxPanel />
+                      <ComponentInspectorPanel />
+                      <PostSelectionPanel />
+
           </div>
 
           <div
