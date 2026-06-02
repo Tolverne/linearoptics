@@ -100,10 +100,6 @@ const PostSelectionPanel: React.FC = () => {
         (state) => state.removePostSelectionCondition
     );
 
-    const setPostSelectionHideMeasuredRails = useExperimentStore(
-        (state) => state.setPostSelectionHideMeasuredRails
-    );
-
     const setPostSelectionRenormalise = useExperimentStore(
         (state) => state.setPostSelectionRenormalise
     );
@@ -458,17 +454,6 @@ const PostSelectionPanel: React.FC = () => {
                     color: "#334155",
                 }}
             >
-                <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <input
-                        type="checkbox"
-                        checked={postSelection.hideMeasuredRails}
-                        disabled={!postSelection.enabled}
-                        onChange={(event) =>
-                            setPostSelectionHideMeasuredRails(event.target.checked)
-                        }
-                    />
-                    Hide measured rails
-                </label>
 
                 <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                     <input

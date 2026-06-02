@@ -519,6 +519,10 @@ const CircuitGrid: React.FC = () => {
           </select>
                   </div>
 
+                 
+
+                  <div style={{ display: "flex" }}>{renderColumnHeaders()}</div>
+
                   <div
                       style={{
                           width: 140,
@@ -559,8 +563,6 @@ const CircuitGrid: React.FC = () => {
                           + Add column
                       </button>
                   </div>
-
-        <div style={{ display: "flex" }}>{renderColumnHeaders()}</div>
       </div>
 
       <div
