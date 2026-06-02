@@ -518,6 +518,7 @@ const CircuitGrid: React.FC = () => {
             ))}
           </select>
                   </div>
+
                   <div
                       style={{
                           width: 140,

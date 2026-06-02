@@ -38,13 +38,6 @@ type PostSelectedChartData = {
     totalOutcomeCount: number;
 };
 
-function measuredRailsForCondition(condition: PostSelectionCondition): number[] {
-    if (condition.type === "rail_equals") {
-        return [condition.rail];
-    }
-
-    return condition.rails;
-}
 
 function conditionMatches(
     occupation: Occupation,
@@ -96,12 +89,6 @@ function applyPostSelection(
         };
     }
 
-    const measuredRails = new Set(
-        config.conditions.flatMap((condition) =>
-            measuredRailsForCondition(condition)
-        )
-    );
-
     const successfulData = data.filter((entry) =>
         occupationMatchesPostSelection(entry.occupation, config)
     );
@@ -111,12 +98,12 @@ function applyPostSelection(
         0
     );
 
-    const collapsedByVisibleOccupation = new Map<string, ChartDatum>();
+    const collapsedByOccupation = new Map<string, ChartDatum>();
 
     for (const entry of successfulData) {
-        const visibleOccupation = config.hideMeasuredRails
-            ? entry.occupation.filter((_, rail) => !measuredRails.has(rail))
-            : entry.occupation;
+        // Keep the full output occupation vector.
+        // Do not remove herald/ancilla rails.
+        const visibleOccupation = entry.occupation;
 
         const key = visibleOccupation.join(",");
 
@@ -125,12 +112,12 @@ function applyPostSelection(
                 ? entry.value / successProbability
                 : entry.value;
 
-        const existing = collapsedByVisibleOccupation.get(key);
+        const existing = collapsedByOccupation.get(key);
 
         if (existing) {
             existing.value += value;
         } else {
-            collapsedByVisibleOccupation.set(key, {
+            collapsedByOccupation.set(key, {
                 label: formatOccupationAsKet(visibleOccupation),
                 occupation: visibleOccupation,
                 value,
@@ -139,7 +126,7 @@ function applyPostSelection(
     }
 
     return {
-        data: [...collapsedByVisibleOccupation.values()],
+        data: [...collapsedByOccupation.values()],
         successProbability,
         successfulOutcomeCount: successfulData.length,
         totalOutcomeCount: data.length,
