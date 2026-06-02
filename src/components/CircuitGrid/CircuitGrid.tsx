@@ -268,14 +268,20 @@ const CircuitGrid: React.FC = () => {
     null
   );
 
+    const [extraColumns, setExtraColumns] = useState(0);
+
   const sortedComponents = useMemo(
     () => sortComponents(components),
     [components]
   );
 
-  const maxComponentColumn =
-    components.length > 0 ? Math.max(...components.map((c) => c.column)) : -1;
-  const columnCount = Math.max(DEFAULT_COLUMN_COUNT, maxComponentColumn + 2);
+    const maxComponentColumn =
+        components.length > 0 ? Math.max(...components.map((c) => c.column)) : -1;
+
+    const columnCount = Math.max(
+        DEFAULT_COLUMN_COUNT + extraColumns,
+        maxComponentColumn + 2
+    );
 
   const gridWidth = columnCount * COLUMN_WIDTH;
   const gridHeight = railCount * ROW_HEIGHT;
@@ -511,7 +517,47 @@ const CircuitGrid: React.FC = () => {
               </option>
             ))}
           </select>
-        </div>
+                  </div>
+                  <div
+                      style={{
+                          width: 140,
+                          flexShrink: 0,
+                      }}
+                  >
+                      <label
+                          htmlFor="add-column-button"
+                          style={{
+                              display: "block",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: "#475569",
+                              marginBottom: 6,
+                              textTransform: "uppercase",
+                              letterSpacing: 0.4,
+                          }}
+                      >
+                          Columns
+                      </label>
+
+                      <button
+                          id="add-column-button"
+                          type="button"
+                          onClick={() => setExtraColumns((current) => current + 1)}
+                          style={{
+                              width: "100%",
+                              padding: "8px 10px",
+                              borderRadius: 10,
+                              border: "1px solid #cbd5e1",
+                              background: "#ffffff",
+                              fontSize: 14,
+                              color: "#0f172a",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                          }}
+                      >
+                          + Add column
+                      </button>
+                  </div>
 
         <div style={{ display: "flex" }}>{renderColumnHeaders()}</div>
       </div>

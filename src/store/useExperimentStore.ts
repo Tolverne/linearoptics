@@ -377,18 +377,25 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       inspectorMode: mode,
     }),
 
-  setResults: (results: SimulationResponse | null) =>
-    set((state) => ({
-      results,
-      selectedStep: 0,
-      selectedSweepOccupations: [],
-      inspectorMode:
-        state.inspectorMode === "sampled" &&
-        (!results?.sampledIntermediateStates ||
-          results.sampledIntermediateStates.length === 0)
-          ? "exact"
-          : state.inspectorMode,
-    })),
+    setResults: (results: SimulationResponse | null) =>
+        set((state) => {
+            const lastColumn =
+                state.components.length > 0
+                    ? Math.max(...state.components.map((component) => component.column))
+                    : 0;
+
+            return {
+                results,
+                selectedStep: lastColumn,
+                selectedSweepOccupations: [],
+                inspectorMode:
+                    state.inspectorMode === "sampled" &&
+                        (!results?.sampledIntermediateStates ||
+                            results.sampledIntermediateStates.length === 0)
+                        ? "exact"
+                        : state.inspectorMode,
+            };
+        }),
 
   setError: (error: string | null) =>
     set({
@@ -493,7 +500,10 @@ export const useExperimentStore = create<ExperimentStore>((set) => ({
       overlapSweep: example.options.overlapSweep ?? defaultOverlapSweep(),
       selectedSweepOccupations: [],
       selectedComponentId: null,
-      selectedStep: 0,
+        selectedStep:
+            example.components.length > 0
+                ? Math.max(...example.components.map((component) => component.column))
+                : 0,
       inspectorMode: "exact",
       numericDisplayMode: "exact",
       results: null,
