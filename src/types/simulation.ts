@@ -203,5 +203,6 @@ export type PostSelectionCondition =
 export type PostSelectionConfig = {
     enabled: boolean;
     conditions: PostSelectionCondition[];
+    hideMeasuredRails: boolean;
     renormalise: boolean;
 };
