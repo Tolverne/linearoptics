@@ -2,133 +2,154 @@ import React from "react";
 import type { ToolboxItemType } from "@/types/simulation";
 
 type ToolboxItemProps = {
-  toolType: ToolboxItemType;
-  label: string;
-  description: string;
+    toolType: ToolboxItemType;
+    label: string;
+    description: string;
 };
 
+const componentAccent: Record<ToolboxItemType, string> = {
+    beam_splitter: "var(--qopt-cyan)",
+    phase_shifter: "var(--qopt-violet)",
+    swap: "var(--qopt-amber)",
+};
+
+const componentBackground: Record<ToolboxItemType, string> = {
+    beam_splitter: "rgba(34, 211, 238, 0.1)",
+    phase_shifter: "rgba(167, 139, 250, 0.1)",
+    swap: "rgba(251, 191, 36, 0.1)",
+};
+
+const componentBorder: Record<ToolboxItemType, string> = {
+    beam_splitter: "rgba(34, 211, 238, 0.38)",
+    phase_shifter: "rgba(167, 139, 250, 0.38)",
+    swap: "rgba(251, 191, 36, 0.38)",
+};
+
+function getToolLabel(toolType: ToolboxItemType): string {
+    if (toolType === "beam_splitter") return "BS";
+    if (toolType === "phase_shifter") return "φ";
+    return "↔";
+}
+
 function getToolVisual(toolType: ToolboxItemType): React.ReactNode {
-  if (toolType === "beam_splitter") {
-    return (
-      <div
-        style={{
-          width: 42,
-          height: 42,
-          borderRadius: 10,
-          border: "2px solid #0f172a",
-          background: "#f8fafc",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 700,
-          fontSize: 12,
-          color: "#0f172a",
-        }}
-      >
-        BS
-      </div>
-    );
-  }
+    const accent = componentAccent[toolType];
 
-  if (toolType === "phase_shifter") {
     return (
-      <div
-        style={{
-          width: 42,
-          height: 42,
-          borderRadius: 10,
-          border: "2px solid #7c3aed",
-          background: "#faf5ff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 700,
-          fontSize: 18,
-          color: "#4c1d95",
-        }}
-      >
-        φ
-      </div>
+        <div
+            style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                border: `1px solid ${componentBorder[toolType]}`,
+                background: componentBackground[toolType],
+                display: "grid",
+                placeItems: "center",
+                fontWeight: 900,
+                fontSize: toolType === "phase_shifter" ? 20 : 13,
+                color: accent,
+                boxShadow: `0 0 22px ${componentBackground[toolType]}`,
+                flexShrink: 0,
+            }}
+        >
+            {getToolLabel(toolType)}
+        </div>
     );
-  }
-
-  return (
-    <div
-      style={{
-        width: 42,
-        height: 42,
-        borderRadius: 10,
-        border: "2px solid #d97706",
-        background: "#fffbeb",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#92400e",
-        fontWeight: 700,
-        fontSize: 13,
-      }}
-    >
-      ↔
-    </div>
-  );
 }
 
 const ToolboxItem: React.FC<ToolboxItemProps> = ({
-  toolType,
-  label,
-  description,
+    toolType,
+    label,
+    description,
 }) => {
-  const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
-    const payload = JSON.stringify({ toolType });
+    const handleDragStart = (event: React.DragEvent<HTMLDivElement>) => {
+        const payload = JSON.stringify({ toolType });
 
-    event.dataTransfer.setData("application/json", payload);
-    event.dataTransfer.setData("text/plain", toolType);
-    event.dataTransfer.effectAllowed = "copy";
-  };
+        event.dataTransfer.setData("application/json", payload);
+        event.dataTransfer.setData("text/plain", toolType);
+        event.dataTransfer.effectAllowed = "copy";
+    };
 
-  return (
-    <div
-      draggable
-      onDragStart={handleDragStart}
-      title={description}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: 12,
-        borderRadius: 14,
-        border: "1px solid #cbd5e1",
-        background: "#ffffff",
-        cursor: "grab",
-        userSelect: "none",
-        boxShadow: "0 2px 6px rgba(15, 23, 42, 0.05)",
-      }}
-    >
-      {getToolVisual(toolType)}
-
-      <div style={{ minWidth: 0 }}>
+    return (
         <div
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#0f172a",
-            marginBottom: 4,
-          }}
+            draggable
+            onDragStart={handleDragStart}
+            title={description}
+            style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: 12,
+                borderRadius: 16,
+                border: "1px solid var(--qopt-border)",
+                background:
+                    "linear-gradient(180deg, rgba(23, 32, 51, 0.92), rgba(12, 18, 31, 0.92))",
+                cursor: "grab",
+                userSelect: "none",
+                boxShadow: "0 10px 26px rgba(0, 0, 0, 0.18)",
+                position: "relative",
+                overflow: "hidden",
+            }}
         >
-          {label}
+            <div
+                style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 16,
+                    background: `linear-gradient(90deg, ${componentBackground[toolType]}, transparent 44%)`,
+                    pointerEvents: "none",
+                }}
+            />
+
+            <div
+                style={{
+                    position: "relative",
+                    zIndex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    width: "100%",
+                }}
+            >
+                {getToolVisual(toolType)}
+
+                <div style={{ minWidth: 0 }}>
+                    <div
+                        style={{
+                            fontSize: 14,
+                            fontWeight: 800,
+                            color: "var(--qopt-text)",
+                            marginBottom: 4,
+                        }}
+                    >
+                        {label}
+                    </div>
+
+                    <div
+                        style={{
+                            fontSize: 12,
+                            color: "var(--qopt-muted)",
+                            lineHeight: 1.35,
+                        }}
+                    >
+                        {description}
+                    </div>
+                </div>
+
+                <div
+                    aria-hidden="true"
+                    style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 999,
+                        background: componentAccent[toolType],
+                        boxShadow: `0 0 16px ${componentAccent[toolType]}`,
+                        marginLeft: "auto",
+                        flexShrink: 0,
+                    }}
+                />
+            </div>
         </div>
-        <div
-          style={{
-            fontSize: 12,
-            color: "#475569",
-            lineHeight: 1.35,
-          }}
-        >
-          {description}
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ToolboxItem;
