@@ -3,39 +3,28 @@ import type { BeamSplitterComponent } from "@/types/simulation";
 import { formatNiceNumber } from "@/utils/formatNumber";
 import { useExperimentStore } from "@/store/useExperimentStore";
 
-
 type BeamSplitterNodeProps = {
-  component: BeamSplitterComponent;
-  rowHeight?: number;
-  columnWidth?: number;
-  isSelected?: boolean;
+    component: BeamSplitterComponent;
+    rowHeight?: number;
+    columnWidth?: number;
+    isSelected?: boolean;
     onSelect?: () => void;
     onDragStart?: (event: React.DragEvent<HTMLButtonElement>) => void;
 };
 
 const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
-  component,
-  rowHeight = 72,
-  columnWidth = 96,
-  isSelected = false,
-  onSelect,
-  onDragStart,
+    component,
+    rowHeight = 72,
+    columnWidth = 96,
+    isSelected = false,
+    onSelect,
+    onDragStart,
 }) => {
-  const topRail = Math.min(component.rails[0], component.rails[1]);
+    const topRail = Math.min(component.rails[0], component.rails[1]);
 
-  const width = columnWidth * 0.9;
-  const height = rowHeight * 2;
-  const xPad = columnWidth * 0.05;
-
-  const fibreStroke = isSelected ? "#2563eb" : "#0f172a";
-  const fibreGlow = isSelected
-    ? "rgba(37,99,235,0.18)"
-    : "rgba(15,23,42,0.08)";
-  const mirrorStroke = isSelected ? "#2563eb" : "#475569";
-  const mirrorFill = isSelected ? "#dbeafe" : "#e2e8f0";
-  const eraseColor = "#f8fafc";
-
-
+    const width = columnWidth * 0.9;
+    const height = rowHeight * 2;
+    const xPad = columnWidth * 0.05;
 
     const mode = useExperimentStore((s) => s.numericDisplayMode);
 
@@ -43,183 +32,253 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
         mode,
     });
 
-  const railYTop = 25;
-  const railYBottom = 75;
+    const titleThetaLabel = formatNiceNumber(component.params.theta, {
+        mode,
+        decimalPlaces: 3,
+    });
 
-  return (
-    <button
-      type="button"
-          onClick={onSelect}
-          onMouseDown={onSelect}
-          draggable
-          onDragStart={onDragStart}
-          title={`Beam Splitter (θ = ${formatNiceNumber(component.params.theta, {
-              mode,
-              decimalPlaces: 3,
-          })})`}
-      style={{
-        position: "absolute",
-        left: component.column * columnWidth + xPad,
-        top: topRail * rowHeight,
-        width,
-        height,
-        background: "transparent",
-        border: "none",
-        padding: 0,
-        cursor: "pointer",
-      }}
-    >
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        style={{ display: "block", overflow: "visible" }}
-      >
-        {isSelected && (
-          <rect
-            x="2"
-            y="2"
-            width="96"
-            height="96"
-            rx="10"
-            fill="rgba(37,99,235,0.06)"
-            stroke="rgba(37,99,235,0.22)"
-            strokeWidth="1.5"
-          />
-        )}
+    const railYTop = 25;
+    const railYBottom = 75;
 
-        <line
-          x1="18"
-          y1={railYTop}
-          x2="82"
-          y2={railYTop}
-          stroke={eraseColor}
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        <line
-          x1="18"
-          y1={railYBottom}
-          x2="82"
-          y2={railYBottom}
-          stroke={eraseColor}
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
+    const railStroke = isSelected ? "#67e8f9" : "#22d3ee";
+    const railGlow = isSelected
+        ? "rgba(34, 211, 238, 0.42)"
+        : "rgba(34, 211, 238, 0.22)";
 
-        <path
-          d="M 5 25 L 40 25"
-          fill="none"
-          stroke={fibreGlow}
-          strokeWidth="9"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 5 75 L 40 75"
-          fill="none"
-          stroke={fibreGlow}
-          strokeWidth="9"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 60 25 L 95 25"
-          fill="none"
-          stroke={fibreGlow}
-          strokeWidth="9"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 60 75 L 95 75"
-          fill="none"
-          stroke={fibreGlow}
-          strokeWidth="9"
-          strokeLinecap="round"
-        />
+    const internalStroke = isSelected ? "#e0faff" : "#a5f3fc";
+    const mirrorStroke = isSelected ? "#67e8f9" : "#22d3ee";
+    const mirrorFill = isSelected
+        ? "rgba(34, 211, 238, 0.28)"
+        : "rgba(34, 211, 238, 0.16)";
 
-        <path
-          d="M 5 25 L 40 25"
-          fill="none"
-          stroke={fibreStroke}
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 5 75 L 40 75"
-          fill="none"
-          stroke={fibreStroke}
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 60 25 L 95 25"
-          fill="none"
-          stroke={fibreStroke}
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 60 75 L 95 75"
-          fill="none"
-          stroke={fibreStroke}
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
+    const benchCutout = "rgba(7, 11, 20, 0.88)";
 
-        <rect
-          x="38"
-          y="46"
-          width="24"
-          height="8"
-          rx="2"
-          fill={mirrorFill}
-          stroke={mirrorStroke}
-          strokeWidth="2"
-        />
-
-        <path
-          d="M 40 25 L 48 46"
-          fill="none"
-          stroke={fibreStroke}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 40 75 L 48 54"
-          fill="none"
-          stroke={fibreStroke}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 52 46 L 60 25"
-          fill="none"
-          stroke={fibreStroke}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 52 54 L 60 75"
-          fill="none"
-          stroke={fibreStroke}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-
-        <text
-          x="66"
-          y="53"
-          fontSize="9.5"
-          fontWeight="700"
-          fill={isSelected ? "#1d4ed8" : "#334155"}
-          textAnchor="start"
-          dominantBaseline="middle"
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            onMouseDown={onSelect}
+            draggable
+            onDragStart={onDragStart}
+            title={`Beam splitter (θ = ${titleThetaLabel})`}
+            style={{
+                position: "absolute",
+                left: component.column * columnWidth + xPad,
+                top: topRail * rowHeight,
+                width,
+                height,
+                background: "transparent",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                filter: isSelected
+                    ? "drop-shadow(0 0 16px rgba(34, 211, 238, 0.45))"
+                    : "drop-shadow(0 0 8px rgba(34, 211, 238, 0.18))",
+            }}
         >
-          {thetaLabel}
-        </text>
-      </svg>
-    </button>
-  );
+            <svg
+                width="100%"
+                height="100%"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                style={{ display: "block", overflow: "visible" }}
+            >
+                {isSelected && (
+                    <rect
+                        x="2"
+                        y="2"
+                        width="96"
+                        height="96"
+                        rx="13"
+                        fill="rgba(34, 211, 238, 0.08)"
+                        stroke="rgba(34, 211, 238, 0.5)"
+                        strokeWidth="1.6"
+                    />
+                )}
+
+                <rect
+                    x="8"
+                    y="10"
+                    width="84"
+                    height="80"
+                    rx="14"
+                    fill="rgba(7, 11, 20, 0.28)"
+                    stroke="rgba(148, 163, 184, 0.12)"
+                    strokeWidth="1"
+                />
+
+                <line
+                    x1="16"
+                    y1={railYTop}
+                    x2="84"
+                    y2={railYTop}
+                    stroke={benchCutout}
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                />
+
+                <line
+                    x1="16"
+                    y1={railYBottom}
+                    x2="84"
+                    y2={railYBottom}
+                    stroke={benchCutout}
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                />
+
+                <path
+                    d="M 5 25 L 40 25"
+                    fill="none"
+                    stroke={railGlow}
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 5 75 L 40 75"
+                    fill="none"
+                    stroke={railGlow}
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 60 25 L 95 25"
+                    fill="none"
+                    stroke={railGlow}
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 60 75 L 95 75"
+                    fill="none"
+                    stroke={railGlow}
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                />
+
+                <path
+                    d="M 5 25 L 40 25"
+                    fill="none"
+                    stroke={railStroke}
+                    strokeWidth="3.4"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 5 75 L 40 75"
+                    fill="none"
+                    stroke={railStroke}
+                    strokeWidth="3.4"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 60 25 L 95 25"
+                    fill="none"
+                    stroke={railStroke}
+                    strokeWidth="3.4"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 60 75 L 95 75"
+                    fill="none"
+                    stroke={railStroke}
+                    strokeWidth="3.4"
+                    strokeLinecap="round"
+                />
+
+                <path
+                    d="M 40 25 L 48 46"
+                    fill="none"
+                    stroke={internalStroke}
+                    strokeWidth="2.7"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 40 75 L 48 54"
+                    fill="none"
+                    stroke={internalStroke}
+                    strokeWidth="2.7"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 52 46 L 60 25"
+                    fill="none"
+                    stroke={internalStroke}
+                    strokeWidth="2.7"
+                    strokeLinecap="round"
+                />
+                <path
+                    d="M 52 54 L 60 75"
+                    fill="none"
+                    stroke={internalStroke}
+                    strokeWidth="2.7"
+                    strokeLinecap="round"
+                />
+
+                <rect
+                    x="37"
+                    y="45"
+                    width="26"
+                    height="10"
+                    rx="3"
+                    fill={mirrorFill}
+                    stroke={mirrorStroke}
+                    strokeWidth="1.8"
+                />
+
+                <line
+                    x1="40"
+                    y1="54"
+                    x2="60"
+                    y2="46"
+                    stroke="rgba(224, 250, 255, 0.48)"
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                />
+
+                <circle
+                    cx="50"
+                    cy="50"
+                    r="2.2"
+                    fill={isSelected ? "#e0faff" : "#67e8f9"}
+                />
+
+                <rect
+                    x="62"
+                    y="40"
+                    width="31"
+                    height="20"
+                    rx="7"
+                    fill="rgba(7, 11, 20, 0.76)"
+                    stroke="rgba(34, 211, 238, 0.26)"
+                    strokeWidth="1"
+                />
+
+                <text
+                    x="77.5"
+                    y="51"
+                    fontSize="8.5"
+                    fontWeight="800"
+                    fill={isSelected ? "#e0faff" : "#a5f3fc"}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                >
+                    {thetaLabel}
+                </text>
+
+                <text
+                    x="15"
+                    y="16"
+                    fontSize="8"
+                    fontWeight="900"
+                    fill="rgba(229, 238, 248, 0.72)"
+                    textAnchor="start"
+                    dominantBaseline="middle"
+                >
+                    BS
+                </text>
+            </svg>
+        </button>
+    );
 };
 
 export default BeamSplitterNode;
