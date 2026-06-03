@@ -463,66 +463,15 @@ const CircuitGrid: React.FC = () => {
               }}
           />
           <div className="export-target">
-          <div
-              style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  gap: 12,
-                  minWidth: 140 + gridWidth,
-                  marginBottom: 2,
-              }}
-          >
               <div
                   style={{
-                      width: 140,
-                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "flex-end",
+                      gap: 12,
+                      minWidth: 140 + gridWidth,
+                      marginBottom: 2,
                   }}
               >
-                  <label
-                      htmlFor="rail-count-inline"
-                      style={{
-                          display: "block",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: "#475569",
-                          marginBottom: 6,
-                          textTransform: "uppercase",
-                          letterSpacing: 0.4,
-                      }}
-                  >
-                      Rails
-                  </label>
-
-                  <select
-                      id="rail-count-inline"
-                      value={railCount}
-                      onChange={(event) => setRailCount(Number(event.target.value))}
-                      style={{
-                          width: "100%",
-                          padding: "8px 10px",
-                          borderRadius: 10,
-                          border: "1px solid #cbd5e1",
-                          background: "#ffffff",
-                          fontSize: 14,
-                          color: "#0f172a",
-                          fontWeight: 600,
-                      }}
-                  >
-            {Array.from(
-              { length: MAX_RAILS - MIN_RAILS + 1 },
-              (_, i) => MIN_RAILS + i
-            ).map((count) => (
-              <option key={count} value={count}>
-                {count}
-              </option>
-            ))}
-          </select>
-                  </div>
-
-                 
-
-                  <div style={{ display: "flex" }}>{renderColumnHeaders()}</div>
-
                   <div
                       style={{
                           width: 140,
@@ -530,7 +479,7 @@ const CircuitGrid: React.FC = () => {
                       }}
                   >
                       <label
-                          htmlFor="add-column-button"
+                          htmlFor="rail-count-inline"
                           style={{
                               display: "block",
                               fontSize: 12,
@@ -541,13 +490,13 @@ const CircuitGrid: React.FC = () => {
                               letterSpacing: 0.4,
                           }}
                       >
-                          Columns
+                          Rails
                       </label>
 
-                      <button
-                          id="add-column-button"
-                          type="button"
-                          onClick={() => setExtraColumns((current) => current + 1)}
+                      <select
+                          id="rail-count-inline"
+                          value={railCount}
+                          onChange={(event) => setRailCount(Number(event.target.value))}
                           style={{
                               width: "100%",
                               padding: "8px 10px",
@@ -556,14 +505,51 @@ const CircuitGrid: React.FC = () => {
                               background: "#ffffff",
                               fontSize: 14,
                               color: "#0f172a",
-                              fontWeight: 700,
-                              cursor: "pointer",
+                              fontWeight: 600,
                           }}
                       >
-                          + Add column
+                          {Array.from(
+                              { length: MAX_RAILS - MIN_RAILS + 1 },
+                              (_, i) => MIN_RAILS + i
+                          ).map((count) => (
+                              <option key={count} value={count}>
+                                  {count}
+                              </option>
+                          ))}
+                      </select>
+                  </div>
+
+                  <div
+                      style={{
+                          width: gridWidth,
+                          display: "flex",
+                          alignItems: "flex-end",
+                      }}
+                  >
+                      {renderColumnHeaders()}
+
+                      <button
+                          id="add-column-button"
+                          type="button"
+                          onClick={() => setExtraColumns((current) => current + 1)}
+                          style={{
+                              width: COLUMN_WIDTH,
+                              height: 36,
+                              borderRadius: 10,
+                              border: "1px solid #cbd5e1",
+                              background: "#ffffff",
+                              fontSize: 13,
+                              color: "#0f172a",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              marginLeft: 0,
+                          }}
+                          title="Add column"
+                      >
+                          +
                       </button>
                   </div>
-      </div>
+              </div>
 
       <div
         style={{
