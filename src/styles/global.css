@@ -1,0 +1,104 @@
+:root {
+    font - family:
+    Inter, ui - sans - serif, system - ui, -apple - system, BlinkMacSystemFont,
+        "Segoe UI", sans - serif;
+
+    color: #e5eef8;
+    background: #070b14;
+
+    font - synthesis: none;
+    text - rendering: geometricPrecision;
+    -webkit - font - smoothing: antialiased;
+    -moz - osx - font - smoothing: grayscale;
+
+    --qopt - bg: #070b14;
+    --qopt - bg - soft: #0b1020;
+    --qopt - panel: #101827;
+    --qopt - panel - raised: #172033;
+    --qopt - panel - soft: #111c2f;
+    --qopt - border: #263247;
+    --qopt - border - soft: rgba(148, 163, 184, 0.18);
+
+    --qopt - text: #e5eef8;
+    --qopt - muted: #94a3b8;
+    --qopt - subtle: #64748b;
+
+    --qopt - cyan: #22d3ee;
+    --qopt - blue: #38bdf8;
+    --qopt - violet: #a78bfa;
+    --qopt - green: #34d399;
+    --qopt - amber: #fbbf24;
+    --qopt - red: #fb7185;
+
+    --qopt - radius - sm: 10px;
+    --qopt - radius - md: 14px;
+    --qopt - radius - lg: 18px;
+    --qopt - radius - xl: 24px;
+
+    --qopt - shadow - card: 0 18px 45px rgba(0, 0, 0, 0.3);
+    --qopt - shadow - glow: 0 0 28px rgba(34, 211, 238, 0.16);
+}
+
+* {
+    box- sizing: border - box;
+}
+
+html {
+    background: var(--qopt - bg);
+}
+
+body {
+    margin: 0;
+    min - width: 320px;
+    min - height: 100vh;
+    background:
+    radial - gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 34rem),
+        radial - gradient(circle at top right, rgba(167, 139, 250, 0.1), transparent 36rem),
+        linear - gradient(180deg, #070b14 0 %, #0b1020 44 %, #070b14 100 %);
+}
+
+button,
+    input,
+    select,
+    textarea {
+    font: inherit;
+}
+
+button {
+    transition:
+    transform 120ms ease,
+        border - color 120ms ease,
+            background 120ms ease,
+                box - shadow 120ms ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.qopt - scrollbar {
+    scrollbar - width: thin;
+    scrollbar - color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.qopt - scrollbar:: -webkit - scrollbar {
+    height: 10px;
+    width: 10px;
+}
+
+.qopt - scrollbar:: -webkit - scrollbar - thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border - radius: 999px;
+}
+
+.qopt - scrollbar:: -webkit - scrollbar - track {
+    background: transparent;
+}
+
+.export -target {
+    color: #0f172a;
+}
