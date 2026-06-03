@@ -8,25 +8,25 @@ import LoadCircuitButton from "./LoadCircuitButton";
 import ModuleLinkButton from "./ModuleLinkButton";
 
 const numberInputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  fontSize: 14,
-  color: "#0f172a",
-  fontWeight: 600,
-  boxSizing: "border-box",
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: 10,
+    border: "1px solid var(--qopt-border)",
+    background: "rgba(7, 11, 20, 0.52)",
+    fontSize: 14,
+    color: "var(--qopt-text)",
+    fontWeight: 600,
+    boxSizing: "border-box",
 };
 
 const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: 12,
-  fontWeight: 700,
-  color: "#475569",
-  marginBottom: 6,
-  textTransform: "uppercase",
-  letterSpacing: 0.4,
+    display: "block",
+    fontSize: 11,
+    fontWeight: 800,
+    color: "var(--qopt-muted)",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
 };
 
 const TopBar: React.FC = () => {
@@ -48,13 +48,9 @@ const setNumericDisplayMode = useExperimentStore(
 
   return (
     <div
-      style={{
-        border: "1px solid #cbd5e1",
-        borderRadius: 16,
-        background: "#ffffff",
-        padding: 16,
-        boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-      }}
+          style={{
+              padding: 0,
+          }}
     >
       <div
         style={{
@@ -70,7 +66,7 @@ const setNumericDisplayMode = useExperimentStore(
             style={{
               fontSize: 22,
               fontWeight: 800,
-              color: "#0f172a",
+              color: "var(--qopt-text)",
               marginBottom: 4,
             }}
           >
@@ -80,7 +76,7 @@ const setNumericDisplayMode = useExperimentStore(
           <div
             style={{
               fontSize: 13,
-              color: "#475569",
+              color: "var(--qopt-muted)",
               lineHeight: 1.4,
               maxWidth: 620,
             }}
@@ -198,7 +194,7 @@ const setNumericDisplayMode = useExperimentStore(
                 <div
                   style={{
                     fontSize: 12,
-                    color: "#64748b",
+                    color: "var(--qopt-muted)",
                     lineHeight: 1.4,
                   }}
                 >
