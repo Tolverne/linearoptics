@@ -25,14 +25,14 @@ const SwapNode: React.FC<SwapNodeProps> = ({
     const height = (bottomRail - topRail + 1) * rowHeight;
     const xPad = columnWidth * 0.05;
 
-    const strokeMain = isSelected ? "#fde68a" : "#fbbf24";
+    const strokeMain = isSelected ? "#67e8f9" : "#22d3ee";
     const strokeGlow = isSelected
-        ? "rgba(251, 191, 36, 0.42)"
-        : "rgba(251, 191, 36, 0.22)";
+        ? "rgba(34, 211, 238, 0.42)"
+        : "rgba(34, 211, 238, 0.22)";
 
     const internalHighlight = isSelected
-        ? "rgba(255, 251, 235, 0.72)"
-        : "rgba(254, 243, 199, 0.48)";
+        ? "rgba(224, 250, 255, 0.72)"
+        : "rgba(165, 243, 252, 0.48)";
 
     const benchCutout = "rgba(7, 11, 20, 0.88)";
     const railYTop = 25;
@@ -75,8 +75,8 @@ const SwapNode: React.FC<SwapNodeProps> = ({
                         width="96"
                         height="96"
                         rx="13"
-                        fill="rgba(251, 191, 36, 0.08)"
-                        stroke="rgba(251, 191, 36, 0.5)"
+                        fill="rgba(34, 211, 238, 0.08)"
+                        stroke="rgba(34, 211, 238, 0.5)"
                         strokeWidth="1.6"
                     />
                 )}
@@ -157,7 +157,7 @@ const SwapNode: React.FC<SwapNodeProps> = ({
                     cy="50"
                     r="8"
                     fill={benchCutout}
-                    stroke="rgba(251, 191, 36, 0.26)"
+                    stroke="rgba(34, 211, 238, 0.26)"
                     strokeWidth="1"
                 />
 
@@ -173,8 +173,8 @@ const SwapNode: React.FC<SwapNodeProps> = ({
                     cx="50"
                     cy="50"
                     r="3"
-                    fill={isSelected ? "#fffbeb" : "#fde68a"}
-                    stroke="rgba(251, 191, 36, 0.5)"
+                    fill={isSelected ? "#e0faff" : "#67e8f9"}
+                    stroke="rgba(34, 211, 238, 0.5)"
                     strokeWidth="1"
                 />
 

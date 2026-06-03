@@ -243,21 +243,21 @@ const BeamSplitterNode: React.FC<BeamSplitterNodeProps> = ({
                 />
 
                 <rect
-                    x="62"
-                    y="40"
-                    width="31"
-                    height="20"
-                    rx="7"
-                    fill="rgba(7, 11, 20, 0.76)"
-                    stroke="rgba(34, 211, 238, 0.26)"
+                    x="58"
+                    y="38"
+                    width="38"
+                    height="24"
+                    rx="8"
+                    fill="rgba(7, 11, 20, 0.8)"
+                    stroke="rgba(34, 211, 238, 0.3)"
                     strokeWidth="1"
                 />
 
                 <text
-                    x="77.5"
+                    x="77"
                     y="51"
-                    fontSize="8.5"
-                    fontWeight="800"
+                    fontSize="11"
+                    fontWeight="900"
                     fill={isSelected ? "#e0faff" : "#a5f3fc"}
                     textAnchor="middle"
                     dominantBaseline="middle"
