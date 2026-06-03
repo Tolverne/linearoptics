@@ -4,13 +4,10 @@ import ToolboxItem from "./ToolboxItem";
 const ToolboxPanel: React.FC = () => {
   return (
     <div
-      style={{
-        border: "1px solid #cbd5e1",
-        borderRadius: 16,
-        background: "#ffffff",
-        padding: 16,
-        boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
-      }}
+          style={{
+              display: "grid",
+              gap: 10,
+          }}
     >
       <div
         style={{
