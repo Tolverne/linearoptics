@@ -12,7 +12,7 @@ const numberInputStyle: React.CSSProperties = {
     padding: "10px 12px",
     borderRadius: 10,
     border: "1px solid var(--qopt-border)",
-    background: "rgba(7, 11, 20, 0.52)",
+    background: "rgba(7, 11, 20, 0.58)",
     fontSize: 14,
     color: "var(--qopt-text)",
     fontWeight: 600,
@@ -25,7 +25,7 @@ const labelStyle: React.CSSProperties = {
     fontWeight: 800,
     color: "var(--qopt-muted)",
     marginBottom: 6,
-    textTransform: "uppercase" as const,
+    textTransform: "uppercase",
     letterSpacing: 0.8,
 };
 
@@ -163,9 +163,9 @@ const setNumericDisplayMode = useExperimentStore(
 
           <div
             style={{
-              border: "1px solid #e2e8f0",
+                border: "1px solid var(--qopt-border)",
               borderRadius: 14,
-              background: "#f8fafc",
+                background: "rgba(7, 11, 20, 0.34)",
               padding: 12,
             }}
           >
@@ -184,7 +184,7 @@ const setNumericDisplayMode = useExperimentStore(
                   style={{
                     fontSize: 13,
                     fontWeight: 800,
-                    color: "#0f172a",
+                      color: "var(--qopt-text)",
                     marginBottom: 2,
                   }}
                 >

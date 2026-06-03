@@ -15,11 +15,13 @@ const ROW_HEIGHT = 72;
 const COLUMN_WIDTH = 96;
 const DEFAULT_COLUMN_COUNT = 8;
 
-const RAIL_STROKE = "#0f172a";
+
 const RAIL_STROKE_WIDTH = 5;
-const RAIL_GLOW = "rgba(15,23,42,0.12)";
-const GRID_LINE = "#e2e8f0";
-const GRID_BACKGROUND = "#f8fafc";
+
+const GRID_BACKGROUND = "#0b1220";
+const GRID_LINE = "rgba(148, 163, 184, 0.18)";
+const RAIL_STROKE = "#22d3ee";
+const RAIL_GLOW = "rgba(34, 211, 238, 0.16)";
 
 const MIN_RAILS = 2;
 const MAX_RAILS = 20;
@@ -420,12 +422,12 @@ const CircuitGrid: React.FC = () => {
   return (
       <div
           style={{
-              border: "1px solid #cbd5e1",
+              border: "1px solid var(--qopt-border)",
               borderRadius: 16,
-              background: "#ffffff",
+              background: "rgba(7, 11, 20, 0.38)",
               padding: 16,
               overflowX: "auto",
-              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.05)",
+              boxShadow: "none",
           }}
       >
           <div style={{ marginBottom: 14 }}>
