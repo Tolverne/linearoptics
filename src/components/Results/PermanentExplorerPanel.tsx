@@ -253,8 +253,35 @@ function permutationAmplitude(
     );
 }
 
-function mismatchCount(a: number[], b: number[]): number {
-    return a.reduce((count, value, index) => count + (value === b[index] ? 0 : 1), 0);
+/**
+ * Builds the internal-state overlap matrix for the simple global-overlap model.
+ *
+ * eta is interpreted as the pairwise internal-state overlap between distinct
+ * photons, not as a probability and not as sqrt(overlap). Therefore:
+ *   S_aa = 1
+ *   S_ab = eta for a !== b
+ */
+function photonOverlapMatrix(n: number, eta: number): number[][] {
+    return Array.from({ length: n }, (_, a) =>
+        Array.from({ length: n }, (_, b) => (a === b ? 1 : eta))
+    );
+}
+
+/**
+ * Calculates the distinguishability factor for a pair of many-photon paths.
+ *
+ * For paths sigma and tau, the interference term is weighted by
+ *   product_k S_{sigma(k), tau(k)}.
+ */
+function pathPairOverlap(
+    sigma: number[],
+    tau: number[],
+    overlaps: number[][]
+): number {
+    return sigma.reduce((product, photonFromSigma, outputIndex) => {
+        const photonFromTau = tau[outputIndex];
+        return product * overlaps[photonFromSigma][photonFromTau];
+    }, 1);
 }
 
 function partialDistinguishableProbability(
@@ -270,12 +297,13 @@ function partialDistinguishableProbability(
     const n = submatrix.length;
     const perms = permutations(Array.from({ length: n }, (_, i) => i));
     const amplitudes = perms.map((perm) => permutationAmplitude(submatrix, perm));
+    const overlaps = photonOverlapMatrix(n, eta);
 
     let weightedSum: Complex = { re: 0, im: 0 };
 
     perms.forEach((sigma, i) => {
         perms.forEach((tau, j) => {
-            const weight = eta ** mismatchCount(sigma, tau);
+            const weight = pathPairOverlap(sigma, tau, overlaps);
             const contribution = scale(mul(amplitudes[i], conjugate(amplitudes[j])), weight);
             weightedSum = add(weightedSum, contribution);
         });
@@ -417,7 +445,8 @@ export default function PermanentExplorerPanel() {
         )}`,
         ``,
         `% Partially distinguishable photons`,
-        `P_{\\eta}=\\frac{1}{\\prod_i s_i!\\prod_j r_j!}\\sum_{\\sigma,\\tau}\\left(\\prod_k U_{r_k,s_{\\sigma(k)}}\\right)\\left(\\prod_k U_{r_k,s_{\\tau(k)}}\\right)^*\\eta^{d(\\sigma,\\tau)}`,
+        `P_{\\eta}=\\frac{1}{\\prod_i s_i!\\prod_j r_j!}\\sum_{\\sigma,\\tau}\\left(\\prod_k U_{r_k,s_{\\sigma(k)}}\\right)\\left(\\prod_k U_{r_k,s_{\\tau(k)}}\\right)^*\\prod_k S_{\\sigma(k),\\tau(k)}`,
+        `S_{ab}=\\begin{cases}1,&a=b\\\\ \\eta,&a\\ne b\\end{cases}`,
         `P_{\\eta=${formatReal(overlap)}}=${formatReal(partial.probability)}`,
     ].join("\n\n");
 
@@ -439,7 +468,6 @@ export default function PermanentExplorerPanel() {
 
         URL.revokeObjectURL(url);
     }
-
 
     function changeOutputRail(rail: number, delta: number) {
         setOutputState((current) => {
@@ -681,10 +709,13 @@ export default function PermanentExplorerPanel() {
 
                         <Section
                             title={`5. Partially distinguishable photons, η = ${formatReal(overlap)}`}
-                            description="This uses the same η value as the current photon-overlap slider. Path-pair interference terms are weighted: identical path pairs survive fully, while different path pairs are suppressed by powers of η."
+                            description="This uses the same η value as the current photon-overlap slider. Each path-pair interference term is weighted by the product of the internal-state overlaps between the paired photon labels."
                         >
                             <KatexBlock
-                                math={`P_{\\eta}=\\frac{1}{\\prod_i s_i!\\prod_j r_j!}\\sum_{\\sigma,\\tau}\\left(\\prod_k U_{r_k,s_{\\sigma(k)}}\\right)\\left(\\prod_k U_{r_k,s_{\\tau(k)}}\\right)^*\\eta^{d(\\sigma,\\tau)}`}
+                                math={`P_{\\eta}=\\frac{1}{\\prod_i s_i!\\prod_j r_j!}\\sum_{\\sigma,\\tau}\\left(\\prod_k U_{r_k,s_{\\sigma(k)}}\\right)\\left(\\prod_k U_{r_k,s_{\\tau(k)}}\\right)^*\\prod_k S_{\\sigma(k),\\tau(k)}`}
+                            />
+                            <KatexBlock
+                                math={`S_{ab}=\\begin{cases}1,&a=b\\\\ \\eta,&a\\ne b\\end{cases}`}
                             />
                             <KatexBlock
                                 math={`P_{\\eta=${formatReal(overlap)}}=${formatReal(partial.probability)}`}
