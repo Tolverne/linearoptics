@@ -262,8 +262,10 @@ function permutationAmplitude(
  *   S_ab = eta for a !== b
  */
 function photonOverlapMatrix(n: number, eta: number): number[][] {
+    const overlapAmplitude = Math.sqrt(Math.max(0, Math.min(1, eta)));
+
     return Array.from({ length: n }, (_, a) =>
-        Array.from({ length: n }, (_, b) => (a === b ? 1 : eta))
+        Array.from({ length: n }, (_, b) => (a === b ? 1 : overlapAmplitude))
     );
 }
 
@@ -715,7 +717,7 @@ export default function PermanentExplorerPanel() {
                                 math={`P_{\\eta}=\\frac{1}{\\prod_i s_i!\\prod_j r_j!}\\sum_{\\sigma,\\tau}\\left(\\prod_k U_{r_k,s_{\\sigma(k)}}\\right)\\left(\\prod_k U_{r_k,s_{\\tau(k)}}\\right)^*\\prod_k S_{\\sigma(k),\\tau(k)}`}
                             />
                             <KatexBlock
-                                math={`S_{ab}=\\begin{cases}1,&a=b\\\\ \\eta,&a\\ne b\\end{cases}`}
+                                math={`S_{ab}=\\begin{cases}1,&a=b\\\\ \\sqrt{\\eta},&a\\ne b\\end{cases}`}
                             />
                             <KatexBlock
                                 math={`P_{\\eta=${formatReal(overlap)}}=${formatReal(partial.probability)}`}
