@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useExperimentStore } from "@/store/useExperimentStore";
 import { formatNiceNumber } from "@/utils/formatNumber";
 import type {
@@ -59,6 +59,74 @@ function findPresetAngle(value: number): string {
     );
 
     return match ? String(match.value) : "custom";
+}
+
+function normaliseAngleInput(input: string): string {
+    return input
+        .trim()
+        .toLowerCase()
+        .replaceAll(" ", "")
+        .replaceAll("π", "pi");
+}
+
+function parseAngleInput(input: string): number | null {
+    const text = normaliseAngleInput(input);
+
+    if (text === "") return null;
+
+    const plainNumber = Number(text);
+    if (Number.isFinite(plainNumber)) return plainNumber;
+
+    if (text === "pi") return Math.PI;
+    if (text === "-pi") return -Math.PI;
+
+    // Examples:
+    // 2pi
+    // 0.5pi
+    // -3pi
+    const simplePiMatch = text.match(/^(-?\d*\.?\d*)pi$/);
+    if (simplePiMatch) {
+        const coefficientText = simplePiMatch[1];
+
+        const coefficient =
+            coefficientText === "" || coefficientText === "+"
+                ? 1
+                : coefficientText === "-"
+                    ? -1
+                    : Number(coefficientText);
+
+        if (Number.isFinite(coefficient)) {
+            return coefficient * Math.PI;
+        }
+    }
+
+    // Examples:
+    // pi/7
+    // 3pi/8
+    // -2pi/5
+    // 2*pi/5
+    const fractionPiMatch = text.match(/^(-?\d*\.?\d*)\*?pi\/(-?\d*\.?\d+)$/);
+    if (fractionPiMatch) {
+        const numeratorText = fractionPiMatch[1];
+        const denominator = Number(fractionPiMatch[2]);
+
+        const numerator =
+            numeratorText === "" || numeratorText === "+"
+                ? 1
+                : numeratorText === "-"
+                    ? -1
+                    : Number(numeratorText);
+
+        if (
+            Number.isFinite(numerator) &&
+            Number.isFinite(denominator) &&
+            denominator !== 0
+        ) {
+            return (numerator * Math.PI) / denominator;
+        }
+    }
+
+    return null;
 }
 
 function getSelectedComponent(
@@ -124,6 +192,20 @@ const inputStyle: React.CSSProperties = {
     boxSizing: "border-box",
 };
 
+const helpTextStyle: React.CSSProperties = {
+    marginTop: 6,
+    fontSize: 11,
+    lineHeight: 1.45,
+    color: "var(--qopt-subtle)",
+};
+
+const errorTextStyle: React.CSSProperties = {
+    marginTop: 6,
+    fontSize: 11,
+    lineHeight: 1.45,
+    color: "#fecdd3",
+};
+
 const infoBoxStyle: React.CSSProperties = {
     padding: 12,
     borderRadius: 14,
@@ -173,7 +255,7 @@ const secondaryButtonStyle: React.CSSProperties = {
     cursor: "pointer",
 };
 
-function AnglePresetSelect({
+function AngleParameterInput({
     id,
     label,
     value,
@@ -184,31 +266,95 @@ function AnglePresetSelect({
     value: number;
     onChange: (value: number) => void;
 }) {
+    const [customInput, setCustomInput] = useState(String(Number(value.toFixed(8))));
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setCustomInput(String(Number(value.toFixed(8))));
+        setError(null);
+    }, [value]);
+
+    function applyCustomInput(nextInput: string) {
+        setCustomInput(nextInput);
+
+        const parsed = parseAngleInput(nextInput);
+
+        if (parsed === null) {
+            setError("Enter a number in radians, or use forms like π/4, 3π/8, or 0.25π.");
+            return;
+        }
+
+        setError(null);
+        onChange(parsed);
+    }
+
     return (
         <div style={{ marginBottom: 14 }}>
-            <label htmlFor={id} style={labelStyle}>
+            <label htmlFor={`${id}-preset`} style={labelStyle}>
                 {label}
             </label>
 
-            <select
-                id={id}
-                value={findPresetAngle(value)}
-                onChange={(event) => {
-                    if (event.target.value === "custom") return;
-                    onChange(Number(event.target.value));
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr",
+                    gap: 8,
                 }}
-                style={inputStyle}
             >
-                {ANGLE_PRESETS.map((preset) => (
-                    <option key={preset.label} value={preset.value}>
-                        {preset.label} ({preset.value.toFixed(3)})
-                    </option>
-                ))}
+                <select
+                    id={`${id}-preset`}
+                    value={findPresetAngle(value)}
+                    onChange={(event) => {
+                        if (event.target.value === "custom") return;
 
-                <option value="custom">
-                    Custom ({formatNiceNumber(value, { mode: "both" })})
-                </option>
-            </select>
+                        const nextValue = Number(event.target.value);
+                        onChange(nextValue);
+                        setCustomInput(String(Number(nextValue.toFixed(8))));
+                        setError(null);
+                    }}
+                    style={inputStyle}
+                >
+                    {ANGLE_PRESETS.map((preset) => (
+                        <option key={preset.label} value={preset.value}>
+                            {preset.label} ({preset.value.toFixed(3)})
+                        </option>
+                    ))}
+
+                    <option value="custom">
+                        Custom ({formatNiceNumber(value, { mode: "both" })})
+                    </option>
+                </select>
+
+                <input
+                    id={`${id}-custom`}
+                    value={customInput}
+                    onChange={(event) => applyCustomInput(event.target.value)}
+                    onBlur={(event) => {
+                        const parsed = parseAngleInput(event.target.value);
+
+                        if (parsed !== null) {
+                            setCustomInput(String(Number(parsed.toFixed(8))));
+                        }
+                    }}
+                    placeholder="Custom value, e.g. 0.123, π/7, 3π/8"
+                    spellCheck={false}
+                    style={{
+                        ...inputStyle,
+                        border: error
+                            ? "1px solid rgba(251, 113, 133, 0.7)"
+                            : inputStyle.border,
+                    }}
+                />
+            </div>
+
+            {error ? (
+                <div style={errorTextStyle}>{error}</div>
+            ) : (
+                <div style={helpTextStyle}>
+                    Current value: {formatNiceNumber(value, { mode: "both" })}. You can type
+                    radians directly or use π notation.
+                </div>
+            )}
         </div>
     );
 }
@@ -219,14 +365,14 @@ function renderBeamSplitterEditor(
 ) {
     return (
         <>
-            <AnglePresetSelect
+            <AngleParameterInput
                 id="bs-theta"
                 label="θ parameter"
                 value={component.params.theta}
                 onChange={(theta) =>
                     updateComponent(component.id, {
-                        ...component,
                         params: {
+                            ...component.params,
                             theta,
                         },
                     })
@@ -248,14 +394,14 @@ function renderPhaseShifterEditor(
 ) {
     return (
         <>
-            <AnglePresetSelect
+            <AngleParameterInput
                 id="ps-phi"
                 label="φ parameter"
                 value={component.params.phi}
                 onChange={(phi) =>
                     updateComponent(component.id, {
-                        ...component,
                         params: {
+                            ...component.params,
                             phi,
                         },
                     })
@@ -328,7 +474,9 @@ const ComponentInspectorPanel: React.FC = () => {
                                     height: 9,
                                     borderRadius: 999,
                                     background: getComponentAccent(selectedComponent),
-                                    boxShadow: `0 0 16px ${getComponentAccent(selectedComponent)}`,
+                                    boxShadow: `0 0 16px ${getComponentAccent(
+                                        selectedComponent
+                                    )}`,
                                     flexShrink: 0,
                                 }}
                             />
