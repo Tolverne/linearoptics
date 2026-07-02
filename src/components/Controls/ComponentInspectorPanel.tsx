@@ -65,8 +65,8 @@ function normaliseAngleInput(input: string): string {
     return input
         .trim()
         .toLowerCase()
-        .replaceAll(" ", "")
-        .replaceAll("π", "pi");
+        .replace(/\s/g, "")
+        .replace(/π/g, "pi");
 }
 
 function parseAngleInput(input: string): number | null {
