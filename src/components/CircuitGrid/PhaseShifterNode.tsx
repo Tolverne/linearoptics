@@ -37,10 +37,10 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
             title={`Phase shifter (φ = ${phiLabel})`}
             style={{
                 position: "absolute",
-                left: component.column * columnWidth + columnWidth * 0.22,
-                top: component.rail * rowHeight + rowHeight * 0.18,
-                width: columnWidth * 0.56,
-                height: rowHeight * 0.64,
+                left: component.column * columnWidth + columnWidth * 0.18,
+                top: component.rail * rowHeight + rowHeight * 0.08,
+                width: columnWidth * 0.64,
+                height: rowHeight * 0.84,
                 borderRadius: 16,
                 border: isSelected
                     ? "1px solid rgba(167, 139, 250, 0.78)"
@@ -56,7 +56,8 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                padding: 5,
+                padding: 4,
+                boxSizing: "border-box",
                 color: "var(--qopt-text)",
                 overflow: "hidden",
             }}
@@ -105,12 +106,12 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
                 style={{
                     position: "relative",
                     zIndex: 1,
-                    width: 26,
-                    height: 26,
+                    width: 24,
+                    height: 24,
                     borderRadius: 999,
                     display: "grid",
                     placeItems: "center",
-                    marginBottom: 4,
+                    marginBottom: 2,
                     background: isSelected
                         ? "rgba(224, 231, 255, 0.18)"
                         : "rgba(167, 139, 250, 0.14)",
@@ -157,9 +158,9 @@ const PhaseShifterNode: React.FC<PhaseShifterNodeProps> = ({
                 aria-hidden="true"
                 style={{
                     position: "absolute",
-                    bottom: 5,
-                    width: 6,
-                    height: 6,
+                    bottom: 3,
+                    width: 4,
+                    height: 4,
                     borderRadius: 999,
                     background: "#a78bfa",
                     boxShadow: "0 0 12px rgba(167, 139, 250, 0.85)",
